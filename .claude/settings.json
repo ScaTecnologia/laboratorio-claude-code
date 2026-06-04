@@ -1,0 +1,35 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"let r='';process.stdin.on('data',c=>r+=c);process.stdin.on('end',()=>{const d=JSON.parse(r);const cmd=(d&&d.tool_input&&d.tool_input.command)||'?';const ts=new Date().toISOString().replace('T',' ').slice(0,19);require('fs').appendFileSync('bash_commands.log','['+ts+'] '+cmd+'\\n');});\"  2>/dev/null || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"let r='';process.stdin.on('data',c=>r+=c);process.stdin.on('end',()=>{const d=JSON.parse(r);const f=(d&&d.tool_input&&d.tool_input.file_path)||'';if(f.endsWith('.js')){const {execSync}=require('child_process');execSync('npm test',{stdio:'inherit'});}});\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"let r='';process.stdin.on('data',c=>r+=c);process.stdin.on('end',()=>{const d=JSON.parse(r);const cmd=(d&&d.tool_input&&d.tool_input.command)||'?';const ts=new Date().toISOString().replace('T',' ').slice(0,19);require('fs').appendFileSync('.claude/bash_log.txt','['+ts+'] '+cmd+'\\n');});\""
+          }
+        ]
+      }
+    ]
+  }
+}

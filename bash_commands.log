@@ -1,0 +1,121 @@
+[2026-05-18 19:45:05] cd "C:/Users/SilvaAl1/OneDrive - Unisys/Desktop/Treinamento/Claude/laboratorio-claude-code" && node -e "const fs=require('fs');const s=JSON.parse(fs.readFileSync('.claude/settings.json','utf8'));console.log('JSON valido');console.log('PreToolUse hook:',s.hooks.PreToolUse[0].hooks[0].command);"
+[2026-05-18 19:45:20] true
+[2026-05-18 19:45:26] cat "C:/Users/SilvaAl1/OneDrive - Unisys/Desktop/Treinamento/Claude/laboratorio-claude-code/bash_commands.log" 2>/dev/null && echo "Log encontrado" || echo "Log ainda nao criado (hook requer reinicio de sessao)"
+[2026-05-18 19:46:36] cd "C:/Users/SilvaAl1/OneDrive - Unisys/Desktop/Treinamento/Claude/laboratorio-claude-code" && echo '{"tool_name":"Edit","tool_input":{"file_path":"src/soma.js"}}' | node -e "let r='';process.stdin.on('data',c=>r+=c);process.stdin.on('end',()=>{const d=JSON.parse(r);const f=(d&&d.tool_input&&d.tool_input.file_path)||'';if(f.endsWith('.js')){const {execSync}=require('child_process');try{execSync('npm test',{stdio:'inherit'});}catch(e){process.exitCode=0;}}});"
+[2026-05-18 19:46:56] cd "C:/Users/SilvaAl1/OneDrive - Unisys/Desktop/Treinamento/Claude/laboratorio-claude-code" && echo '{"tool_name":"Edit","tool_input":{"file_path":"README.md"}}' | node -e "let r='';process.stdin.on('data',c=>r+=c);process.stdin.on('end',()=>{const d=JSON.parse(r);const f=(d&&d.tool_input&&d.tool_input.file_path)||'';if(f.endsWith('.js')){const {execSync}=require('child_process');try{execSync('npm test',{stdio:'inherit'});}catch(e){process.exitCode=0;}}});" && echo "Saiu sem rodar npm test (correto)"
+[2026-05-18 19:47:51] cd "C:/Users/SilvaAl1/OneDrive - Unisys/Desktop/Treinamento/Claude/laboratorio-claude-code" && node -e "const s=JSON.parse(require('fs').readFileSync('.claude/settings.json','utf8'));console.log('JSON valido');s.hooks.PostToolUse.forEach(h=>console.log('PostToolUse matcher:',h.matcher));"
+[2026-06-04 10:36:13] echo '{"tool_name":"Edit","tool_input":{"file_path":"src/soma.js"}}' | node -e "let r='';process.stdin.on('data',c=>r+=c);process.stdin.on('end',()=>{const d=JSON.parse(r);const f=(d&&d.tool_input&&d.tool_input.file_path)||'';if(f.endsWith('.js')){const {execSync}=require('child_process');execSync('npm test',{stdio:'inherit'});}});"
+[2026-06-04 10:37:22] node -e "JSON.parse(require('fs').readFileSync('.claude/settings.json','utf8')); console.log('JSON válido')"
+[2026-06-04 10:51:10] cd "C:\Users\SilvaAl1\OneDrive - Unisys\Desktop\Treinamento\Claude\laboratorio-claude-code" && node src/usuarios.test.js
+[2026-06-04 11:20:30] cd "C:\Users\SilvaAl1\OneDrive - Unisys\Desktop\Treinamento\Claude\laboratorio-claude-code" && node -e "require('./src/server'); setTimeout(() => process.exit(0), 500)"
+[2026-06-04 11:49:38] mkdir -p "C:\Users\SilvaAl1\OneDrive - Unisys\Desktop\Treinamento\Claude\laboratorio-claude-code\src\public"
+[2026-06-04 12:03:29] cd "C:\Users\SilvaAl1\OneDrive - Unisys\Desktop\Treinamento\Claude\laboratorio-claude-code" && npm install pg
+[2026-06-04 14:57:06] mkdir -p "C:\Users\SilvaAl1\OneDrive - Unisys\Desktop\Treinamento\Claude\laboratorio-claude-code\.claude\skills\frontend-layout-system"
+[2026-06-04 15:02:50] mkdir -p "C:\Users\SilvaAl1\OneDrive - Unisys\Desktop\Treinamento\Claude\laboratorio-claude-code\src\public\css" && mkdir -p "C:\Users\SilvaAl1\OneDrive - Unisys\Desktop\Treinamento\Claude\laboratorio-claude-code\src\public\js"
+[2026-06-04 16:51:26] cd "C:\Users\SilvaAl1\OneDrive - Unisys\Desktop\Treinamento\Claude\laboratorio-claude-code" && node src/server.js &
+[2026-06-04 17:07:17] curl -s http://localhost:3000/me
+[2026-06-04 17:07:34] curl -s -X POST http://localhost:3000/login -H "Content-Type: application/json" -d "{\"email\":\"admin@labsystem.com\",\"senha\":\"admin123\"}" -c /tmp/cookies.txt -v 2>&1
+[2026-06-04 17:07:44] Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force; Start-Sleep -Seconds 1; Write-Host "Processos node encerrados"
+[2026-06-04 17:08:35] curl -s -X POST http://localhost:3000/login -H "Content-Type: application/json" -d "{\"email\":\"admin@labsystem.com\",\"senha\":\"admin123\"}" -c /tmp/cookies.txt
+[2026-06-04 17:09:32] # 1. /me sem sessão deve retornar 401
+echo "--- /me sem login ---"
+curl -s http://localhost:3000/me
+
+# 2. Login com senha errada deve retornar 401
+echo -e "\n--- Login senha errada ---"
+curl -s -X POST http://localhost:3000/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@labsystem.com","senha":"errada"}'
+
+# 3. Login correto deve retornar 200 + cookie
+echo -e "\n--- Login correto ---"
+curl -s -X POST http://localhost:3000/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@labsystem.com","senha":"admin123"}' \
+  -c /tmp/lab_cookies.txt -D /tmp/lab_headers.txt
+echo -e "\n--- Cookie salvo ---"
+cat /tmp/lab_headers.txt | grep -i set-cookie
+[2026-06-04 17:10:24] node -e "
+const { pool } = require('./src/db');
+pool.query('SELECT id, nome, email, role, LEFT(senha, 10) as senha_inicio FROM usuarios ORDER BY id')
+  .then(r => { console.log(r.rows); pool.end(); })
+  .catch(e => { console.error(e.message); pool.end(); });
+" 2>&1
+[2026-06-04 17:10:48] # Login com o admin real
+echo "--- Login admin real ---"
+curl -s -X POST http://localhost:3000/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"Alexaugusto2@gmail.com","senha":"admin123"}' \
+  -c /tmp/lab_cookies.txt
+
+echo -e "\n--- /me com sessão ---"
+curl -s http://localhost:3000/me -b /tmp/lab_cookies.txt
+
+echo -e "\n--- Listar usuários (Admin) ---"
+curl -s http://localhost:3000/usuarios -b /tmp/lab_cookies.txt
+
+echo -e "\n--- Listar clientes (autenticado) ---"
+curl -s http://localhost:3000/clientes -b /tmp/lab_cookies.txt
+[2026-06-04 17:10:58] # Testar proteção: acesso sem sessão ao /usuarios
+echo "--- /usuarios sem sessão (deve 401) ---"
+curl -s http://localhost:3000/usuarios
+
+# Testar logout
+echo -e "\n--- Logout ---"
+curl -s -X POST http://localhost:3000/logout -b /tmp/lab_cookies.txt -c /tmp/lab_cookies.txt
+
+# Verificar sessão encerrada
+echo -e "\n--- /me após logout (deve 401) ---"
+curl -s http://localhost:3000/me -b /tmp/lab_cookies.txt
+
+# Testar login com campo vazio
+echo -e "\n--- Login sem senha (deve 400) ---"
+curl -s -X POST http://localhost:3000/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"Alexaugusto2@gmail.com"}'
+[2026-06-04 17:11:07] # Testar acesso de Atendente ao /usuarios (deve 403)
+echo "--- Criar atendente com senha ---"
+# Login como admin primeiro
+curl -s -X POST http://localhost:3000/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"Alexaugusto2@gmail.com","senha":"admin123"}' \
+  -c /tmp/admin_cookies.txt > /dev/null
+
+# Atualizar senha do atendente Simone
+curl -s -X PUT http://localhost:3000/usuarios/2 \
+  -H "Content-Type: application/json" \
+  -d '{"senha":"simone123"}' \
+  -b /tmp/admin_cookies.txt
+
+echo -e "\n--- Login como Atendente ---"
+curl -s -X POST http://localhost:3000/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"simone@gmail.com","senha":"simone123"}' \
+  -c /tmp/atendente_cookies.txt
+
+echo -e "\n--- Atendente tenta acessar /usuarios (deve 403) ---"
+curl -s http://localhost:3000/usuarios -b /tmp/atendente_cookies.txt
+
+echo -e "\n--- Atendente acessa /clientes (deve funcionar) ---"
+curl -s http://localhost:3000/clientes -b /tmp/atendente_cookies.txt
+[2026-06-04 17:11:18] # Página de login existe e retorna HTML
+echo "--- login.html ---"
+curl -s http://localhost:3000/login.html | grep -o "<title>.*</title>"
+
+# CSS e JS estáticos estão sendo servidos
+echo "--- CSS ---"
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/css/styles.css
+
+echo -e "\n--- JS auth.js ---"
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/js/auth.js
+
+# clientes.html existe
+echo -e "\n--- clientes.html ---"
+curl -s http://localhost:3000/clientes.html | grep -o "<title>.*</title>"
+
+# usuarios.html existe
+echo -e "\n--- usuarios.html ---"
+curl -s http://localhost:3000/usuarios.html | grep -o "<title>.*</title>"
+[2026-06-04 19:22:21] mkdir -p "C:\Users\SilvaAl1\OneDrive - Unisys\Desktop\Treinamento\Claude\laboratorio-claude-code\docs"
+[2026-06-04 19:28:11] mkdir -p "C:\Users\SilvaAl1\OneDrive - Unisys\Desktop\Treinamento\Claude\laboratorio-claude-code\.claude\skills\context-recovery"
+[2026-06-04 19:30:56] cd "C:\Users\SilvaAl1\OneDrive - Unisys\Desktop\Treinamento\Claude\laboratorio-claude-code" && git log --oneline -10 && echo "---" && git status --short

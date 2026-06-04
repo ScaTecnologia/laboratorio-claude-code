@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>LabSystem</title>
+</head>
+<body>
+  <script>
+    fetch('/me')
+      .then(r => { window.location.href = r.ok ? '/clientes.html' : '/login.html'; })
+      .catch(() => { window.location.href = '/login.html'; });
+  </script>
+</body>
+</html>

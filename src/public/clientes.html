@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LabSystem — Clientes</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+
+  <header class="header">
+    <a href="/" class="header-logo">Lab<span>System</span></a>
+    <nav class="nav" aria-label="Menu principal">
+      <a href="/clientes.html" class="active">Clientes</a>
+      <a href="/usuarios.html" data-admin>Usuários</a>
+      <a href="/api-docs">API Docs</a>
+    </nav>
+    <div class="header-user">
+      <span class="header-user-nome" id="usuario-nome"></span>
+      <span class="badge" id="usuario-role"></span>
+      <button class="btn btn-sm btn-outline" onclick="logout()">Sair</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="container">
+
+      <h1 class="page-title">Cadastro de Clientes</h1>
+
+      <div class="card">
+        <p class="card-title" id="form-titulo">Novo Cliente</p>
+        <form id="form-cliente" onsubmit="salvar(event)" novalidate>
+          <input type="hidden" id="cliente-id" />
+          <div class="form-grid">
+            <div class="form-group col-2">
+              <label for="nome">Nome</label>
+              <input type="text" id="nome" placeholder="Nome completo do cliente" />
+            </div>
+            <div class="form-group col-2">
+              <label for="endereco">Endereço</label>
+              <input type="text" id="endereco" placeholder="Rua, número, complemento" />
+            </div>
+            <div class="form-group">
+              <label for="bairro">Bairro</label>
+              <input type="text" id="bairro" placeholder="Bairro" />
+            </div>
+            <div class="form-group">
+              <label for="cidade">Cidade</label>
+              <input type="text" id="cidade" placeholder="Cidade" />
+            </div>
+            <div class="form-group">
+              <label for="estado">Estado (UF)</label>
+              <input type="text" id="estado" placeholder="SP" maxlength="2" />
+            </div>
+            <div class="form-group">
+              <label for="telefone">Telefone</label>
+              <input type="tel" id="telefone" placeholder="(00) 00000-0000" />
+            </div>
+            <div class="form-group col-2">
+              <label for="email">E-mail</label>
+              <input type="email" id="email" placeholder="cliente@email.com" />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <button type="button" class="btn btn-secondary" id="btn-cancelar" onclick="cancelarEdicao()" hidden>Cancelar</button>
+          </div>
+        </form>
+        <div class="mensagem" id="mensagem" role="alert" aria-live="polite"></div>
+      </div>
+
+      <div class="card">
+        <p class="card-title">Clientes cadastrados</p>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Nome</th>
+                <th scope="col">Cidade</th>
+                <th scope="col">E-mail</th>
+                <th scope="col">Telefone</th>
+                <th scope="col">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="footer">LabSystem &copy; 2026</footer>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/clientes.js"></script>
+</body>
+</html>
