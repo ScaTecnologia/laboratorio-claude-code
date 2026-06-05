@@ -5,7 +5,19 @@ const API = '/fornecedores';
   if (!usuario) return;
   configurarHeader(usuario);
   carregar();
+  document.getElementById('cnpj').addEventListener('input', e => {
+    e.target.value = mascararCnpj(e.target.value);
+  });
 })();
+
+function mascararCnpj(v) {
+  const d = String(v).replace(/\D/g, '').slice(0, 14);
+  if (d.length <= 2)  return d;
+  if (d.length <= 5)  return `${d.slice(0, 2)}.${d.slice(2)}`;
+  if (d.length <= 8)  return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5)}`;
+  if (d.length <= 12) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8)}`;
+  return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
+}
 
 async function carregar() {
   const res = await fetch(API);
@@ -23,7 +35,7 @@ async function carregar() {
       <td class="td-id">${f.id}</td>
       <td>${escHtml(f.nomeempresa)}</td>
       <td>${escHtml(f.nomefantasia || '—')}</td>
-      <td>${escHtml(f.cnpj || '—')}</td>
+      <td>${escHtml(f.cnpj ? mascararCnpj(f.cnpj) : '—')}</td>
       <td>${escHtml(f.cidade || '—')}</td>
       <td>${escHtml(f.telefone || '—')}</td>
       <td class="acoes">
@@ -44,7 +56,7 @@ async function salvar(event) {
   const body = {
     nomeempresa,
     nomefantasia: document.getElementById('nomefantasia').value.trim(),
-    cnpj:         document.getElementById('cnpj').value.trim(),
+    cnpj:         document.getElementById('cnpj').value.replace(/\D/g, ''),
     telefone:     document.getElementById('telefone').value.trim(),
     email:        document.getElementById('email').value.trim(),
     endereco:     document.getElementById('endereco').value.trim(),
@@ -74,18 +86,18 @@ async function editar(id) {
   if (!res.ok) return;
   const f = await res.json();
 
-  document.getElementById('fornecedor-id').value         = f.id;
-  document.getElementById('nomeempresa').value           = f.nomeempresa   || '';
-  document.getElementById('nomefantasia').value          = f.nomefantasia  || '';
-  document.getElementById('cnpj').value                  = f.cnpj         || '';
-  document.getElementById('telefone').value              = f.telefone      || '';
-  document.getElementById('email').value                 = f.email         || '';
-  document.getElementById('endereco').value              = f.endereco      || '';
-  document.getElementById('bairro').value                = f.bairro        || '';
-  document.getElementById('cidade').value                = f.cidade        || '';
-  document.getElementById('estado').value                = f.estado        || '';
-  document.getElementById('form-titulo').textContent     = 'Editar Fornecedor';
-  document.getElementById('btn-cancelar').hidden         = false;
+  document.getElementById('fornecedor-id').value     = f.id;
+  document.getElementById('nomeempresa').value       = f.nomeempresa  || '';
+  document.getElementById('nomefantasia').value      = f.nomefantasia || '';
+  document.getElementById('cnpj').value              = mascararCnpj(f.cnpj || '');
+  document.getElementById('telefone').value          = f.telefone     || '';
+  document.getElementById('email').value             = f.email        || '';
+  document.getElementById('endereco').value          = f.endereco     || '';
+  document.getElementById('bairro').value            = f.bairro       || '';
+  document.getElementById('cidade').value            = f.cidade       || '';
+  document.getElementById('estado').value            = f.estado       || '';
+  document.getElementById('form-titulo').textContent = 'Editar Fornecedor';
+  document.getElementById('btn-cancelar').hidden     = false;
   document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
 }
 

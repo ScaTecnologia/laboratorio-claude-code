@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LabSystem — Avaliações</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    /* Seletor de estrelas ────────────────────────────────── */
+    .star-selector   { display:flex; gap:4px; margin:6px 0; }
+    .star-btn        { background:none; border:none; font-size:2rem; cursor:pointer;
+                       color:#d1d5db; padding:0; line-height:1; transition:color .15s; }
+    .star-btn.ativa  { color:#f59e0b; }
+    .star-btn:hover  { color:#fbbf24; }
+    .stars-display   { color:#f59e0b; letter-spacing:1px; }
+    .stars-empty     { color:#d1d5db; }
+
+    /* Status badges ──────────────────────────────────────── */
+    .badge-pendente  { background:#f59e0b; color:#fff; }
+    .badge-aprovado  { background:#10b981; color:#fff; }
+    .badge-rejeitado { background:#ef4444; color:#fff; }
+
+    /* Média ────────────────────────────────────────────── */
+    .media-card      { background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px;
+                       padding:16px 20px; display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+    .media-nota      { font-size:2.8rem; font-weight:800; color:#1f2937; }
+    .media-estrelas  { font-size:1.5rem; color:#f59e0b; }
+    .media-total     { font-size:.85rem; color:#6b7280; }
+    .dist-bar-wrap   { flex:1; min-width:180px; }
+    .dist-row        { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+    .dist-label      { width:20px; font-size:.8rem; color:#374151; text-align:right; }
+    .dist-track      { flex:1; height:12px; background:#e5e7eb; border-radius:6px; overflow:hidden; }
+    .dist-fill       { height:100%; background:#f59e0b; border-radius:6px; }
+    .dist-count      { width:24px; font-size:.78rem; color:#6b7280; }
+
+    /* Tags/pros/contras ──────────────────────────────────── */
+    .tag-chip { display:inline-block; background:#eff6ff; color:#1d4ed8; border-radius:9999px;
+                font-size:.72rem; padding:2px 8px; margin:2px; }
+    .pro-chip  { background:#f0fdf4; color:#166534; }
+    .contra-chip { background:#fef2f2; color:#991b1b; }
+
+    /* Info box ───────────────────────────────────────────── */
+    .info-box { background:#fffbeb; border-left:4px solid #f59e0b; padding:12px 16px;
+                border-radius:6px; font-size:.88rem; line-height:1.6; }
+    .mongo-tag { display:inline-block; font-size:.72rem; background:#4db33d; color:#fff;
+                 padding:2px 8px; border-radius:9999px; font-weight:700; margin-left:6px; }
+
+    /* Detalhe expandido ─────────────────────────────────── */
+    .detalhe-row td { background:#f9fafb; }
+    .detalhe-box    { padding:12px 0; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <a href="/" class="header-logo">Lab<span>System</span></a>
+    <nav class="nav" aria-label="Menu principal">
+      <a href="/clientes.html">Clientes</a>
+      <a href="/fornecedores.html">Fornecedores</a>
+      <a href="/produtos.html">Produtos</a>
+      <a href="/estoque.html">Estoque</a>
+      <a href="/carrinho.html">Carrinho</a>
+      <a href="/avaliacoes.html" class="active">Avaliações</a>
+      <a href="/eventos.html">Eventos</a>
+      <a href="/relatorio.html">Relatório</a>
+      <a href="/usuarios.html" data-admin>Usuários</a>
+      <a href="/api-docs">API Docs</a>
+    </nav>
+    <div class="header-user">
+      <span class="header-user-nome" id="usuario-nome"></span>
+      <span class="badge" id="usuario-role"></span>
+      <button class="btn btn-sm btn-outline" onclick="logout()">Sair</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="container">
+
+      <h1 class="page-title">Avaliações de Produtos <span class="mongo-tag">MongoDB</span></h1>
+
+      <!-- Por que MongoDB aqui? -->
+      <div class="card">
+        <div class="info-box">
+          <strong>Por que MongoDB para avaliações?</strong>
+          Os campos <code>pros</code>, <code>contras</code>, <code>imagens</code> e <code>tags</code>
+          são arrays — armazenados nativamente como documento MongoDB sem tabelas extras.
+          Em PostgreSQL seriam necessárias 4 tabelas extras + JOINs.
+          O campo <code>dataCriacao</code> e <code>dataAtualizacao</code> são controlados pelo próprio documento.
+        </div>
+      </div>
+
+      <!-- Dados de teste -->
+      <div class="card">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-primary" onclick="semearDados()">🌱 Criar Avaliações de Teste</button>
+          <button class="btn btn-secondary" onclick="carregar()">↻ Atualizar Lista</button>
+        </div>
+        <div class="mensagem" id="msg-seed" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- Filtros e média -->
+      <div class="card">
+        <p class="card-title">Filtrar Avaliações</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="filtro-produto">Produto ID</label>
+            <input type="number" id="filtro-produto" placeholder="ex: 1" oninput="onChangeProduto()" />
+          </div>
+          <div class="form-group">
+            <label for="filtro-status">Status</label>
+            <select id="filtro-status" onchange="carregar()">
+              <option value="">— Todos —</option>
+              <option value="pendente">Pendente</option>
+              <option value="aprovado">Aprovado</option>
+              <option value="rejeitado">Rejeitado</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="filtro-nota">Nota</label>
+            <select id="filtro-nota" onchange="carregar()">
+              <option value="">— Todas —</option>
+              <option value="5">⭐⭐⭐⭐⭐ 5</option>
+              <option value="4">⭐⭐⭐⭐ 4</option>
+              <option value="3">⭐⭐⭐ 3</option>
+              <option value="2">⭐⭐ 2</option>
+              <option value="1">⭐ 1</option>
+            </select>
+          </div>
+        </div>
+        <!-- Estatísticas do produto (aparece quando produtoId preenchido) -->
+        <div id="media-box" style="display:none;margin-top:16px"></div>
+      </div>
+
+      <!-- Formulário de nova avaliação / edição -->
+      <div class="card">
+        <p class="card-title" id="form-titulo">Nova Avaliação</p>
+        <form id="form-avaliacao" onsubmit="salvar(event)" novalidate>
+          <input type="hidden" id="av-id" />
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="av-produtoId">Produto ID</label>
+              <input type="number" id="av-produtoId" placeholder="ID do produto no PostgreSQL" />
+            </div>
+            <div class="form-group">
+              <label>Nota</label>
+              <div class="star-selector" id="star-selector">
+                <button type="button" class="star-btn" onclick="setNota(1)">★</button>
+                <button type="button" class="star-btn" onclick="setNota(2)">★</button>
+                <button type="button" class="star-btn" onclick="setNota(3)">★</button>
+                <button type="button" class="star-btn" onclick="setNota(4)">★</button>
+                <button type="button" class="star-btn" onclick="setNota(5)">★</button>
+              </div>
+              <input type="hidden" id="av-nota" value="0" />
+            </div>
+            <div class="form-group col-2">
+              <label for="av-titulo">Título</label>
+              <input type="text" id="av-titulo" placeholder="Ex: Produto excelente!" />
+            </div>
+            <div class="form-group col-2">
+              <label for="av-comentario">Comentário</label>
+              <textarea id="av-comentario" rows="3" placeholder="Descreva sua experiência..." style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-family:inherit;resize:vertical"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="av-pros">Prós <small style="color:#9ca3af">(um por linha)</small></label>
+              <textarea id="av-pros" rows="3" placeholder="Qualidade excelente&#10;Entrega rápida&#10;Embalagem perfeita" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-family:inherit;resize:vertical"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="av-contras">Contras <small style="color:#9ca3af">(um por linha)</small></label>
+              <textarea id="av-contras" rows="3" placeholder="Preço alto&#10;Manual confuso" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-family:inherit;resize:vertical"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="av-tags">Tags <small style="color:#9ca3af">(vírgula)</small></label>
+              <input type="text" id="av-tags" placeholder="recomendo, qualidade, black-friday" />
+            </div>
+            <div class="form-group">
+              <label for="av-imagens">Imagens (URLs) <small style="color:#9ca3af">(vírgula)</small></label>
+              <input type="text" id="av-imagens" placeholder="https://exemplo.com/foto1.jpg" />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar Avaliação</button>
+            <button type="button" class="btn btn-secondary" id="btn-cancelar" onclick="cancelar()" hidden>Cancelar</button>
+          </div>
+        </form>
+        <div class="mensagem" id="mensagem" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- Lista de avaliações -->
+      <div class="card">
+        <p class="card-title">
+          Avaliações cadastradas
+          <span id="total-badge" style="font-size:.82rem;color:#9ca3af;margin-left:8px"></span>
+        </p>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Nota</th>
+                <th scope="col">Título</th>
+                <th scope="col">Produto</th>
+                <th scope="col">Cliente</th>
+                <th scope="col">Status</th>
+                <th scope="col">Data</th>
+                <th scope="col">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-body">
+              <tr><td colspan="7" class="vazio">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="paginacao" style="display:flex;gap:8px;margin-top:12px;align-items:center"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="footer">LabSystem &copy; 2026</footer>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/avaliacoes.js"></script>
+</body>
+</html>

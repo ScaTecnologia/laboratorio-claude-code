@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LabSystem — Carrinho</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .redis-tag     { display:inline-block; font-size:.75rem; background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:9999px; font-weight:600; }
+    .ttl-countdown { font-size:.88rem; color:#8b5cf6; font-weight:600; }
+    .checkout-box  { background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:16px; margin-top:8px; }
+    .checkout-box h3 { color:#16a34a; margin:0 0 8px; }
+    .total-row     { font-size:1.1rem; font-weight:700; text-align:right; padding:8px 0; border-top:2px solid #e5e7eb; margin-top:4px; }
+    .info-box      { background:#eff6ff; border-left:4px solid #3b82f6; padding:12px 16px; border-radius:6px; font-size:.88rem; line-height:1.6; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <a href="/" class="header-logo">Lab<span>System</span></a>
+    <nav class="nav" aria-label="Menu principal">
+      <a href="/clientes.html">Clientes</a>
+      <a href="/fornecedores.html">Fornecedores</a>
+      <a href="/produtos.html">Produtos</a>
+      <a href="/estoque.html">Estoque</a>
+      <a href="/carrinho.html" class="active">Carrinho</a>
+      <a href="/avaliacoes.html">Avaliações</a>
+      <a href="/eventos.html">Eventos</a>
+      <a href="/relatorio.html">Relatório</a>
+      <a href="/usuarios.html" data-admin>Usuários</a>
+      <a href="/api-docs">API Docs</a>
+    </nav>
+    <div class="header-user">
+      <span class="header-user-nome" id="usuario-nome"></span>
+      <span class="badge" id="usuario-role"></span>
+      <button class="btn btn-sm btn-outline" onclick="logout()">Sair</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="container">
+
+      <h1 class="page-title">Carrinho de Compras <span class="redis-tag">100% Redis</span></h1>
+
+      <!-- Informação educativa -->
+      <div class="card">
+        <div class="info-box">
+          O carrinho é armazenado como um <strong>Hash no Redis</strong> — sem banco de dados.
+          Expira automaticamente em <strong>30 minutos</strong> (TTL renovado a cada interação).
+          Ao fazer checkout, cada item reserva estoque via <strong>script Lua atômico</strong>
+          com TTL de 10 minutos para completar o pagamento.
+        </div>
+      </div>
+
+      <!-- Adicionar ao carrinho -->
+      <div class="card">
+        <p class="card-title">Adicionar ao Carrinho</p>
+        <div class="form-grid">
+          <div class="form-group col-2">
+            <label for="sel-produto">Produto</label>
+            <select id="sel-produto"><option value="">— Selecione —</option></select>
+          </div>
+          <div class="form-group">
+            <label for="qtd-item">Quantidade</label>
+            <input type="number" id="qtd-item" min="1" value="1" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="adicionarItem()">+ Adicionar ao Carrinho</button>
+        </div>
+        <div class="mensagem" id="msg-add" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- Conteúdo do carrinho -->
+      <div class="card">
+        <p class="card-title">
+          Meu Carrinho
+          <span id="cart-ttl-badge" class="ttl-countdown" style="margin-left:12px"></span>
+        </p>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Produto</th>
+                <th scope="col">Preço Unit.</th>
+                <th scope="col">Qtd</th>
+                <th scope="col">Subtotal</th>
+                <th scope="col">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="cart-body">
+              <tr><td colspan="5" class="vazio">Carrinho vazio.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="total-row" id="cart-total" style="display:none"></div>
+        <div class="form-actions" id="cart-acoes" style="display:none">
+          <button class="btn btn-primary" onclick="checkout()">🛍️ Realizar Checkout</button>
+          <button class="btn btn-danger"  onclick="limparCarrinho()">🗑️ Limpar Carrinho</button>
+        </div>
+        <div class="mensagem" id="msg-cart" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- Resultado do checkout -->
+      <div class="card" id="card-checkout" hidden>
+        <p class="card-title">Reserva Confirmada</p>
+        <div class="checkout-box" id="checkout-result"></div>
+        <p style="font-size:.85rem;color:#666;margin-top:12px">
+          Acesse <a href="/estoque.html">Gestão de Estoque</a> para ver as reservas ativas no Redis
+          e simular a confirmação do pagamento.
+        </p>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="footer">LabSystem &copy; 2026</footer>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/carrinho.js"></script>
+</body>
+</html>

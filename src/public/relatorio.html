@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LabSystem — Relatório Black Friday</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .metric-grid  { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:0; }
+    .metric-card  { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:18px 20px; text-align:center; }
+    .metric-value { font-size:2rem; font-weight:800; color:#1f2937; margin:4px 0; }
+    .metric-label { font-size:.82rem; color:#6b7280; font-weight:500; }
+    .metric-sub   { font-size:.78rem; color:#9ca3af; margin-top:2px; }
+    .metric-green { color:#059669; }
+    .metric-blue  { color:#2563eb; }
+    .metric-purple{ color:#7c3aed; }
+    .metric-orange{ color:#d97706; }
+
+    /* Funil */
+    .funnel       { display:flex; flex-direction:column; gap:6px; }
+    .funnel-item  { display:flex; align-items:center; gap:10px; }
+    .funnel-label { width:220px; font-size:.85rem; color:#374151; flex-shrink:0; }
+    .funnel-wrap  { flex:1; background:#f3f4f6; border-radius:4px; height:28px; overflow:hidden; }
+    .funnel-bar   { height:100%; border-radius:4px; display:flex; align-items:center;
+                    padding:0 8px; font-size:.8rem; font-weight:700; color:#fff;
+                    transition:width .4s ease; min-width:30px; }
+    .funnel-count { width:50px; text-align:right; font-size:.85rem; font-weight:700; color:#374151; }
+
+    /* Barras horizontais */
+    .hbar-list    { display:flex; flex-direction:column; gap:8px; }
+    .hbar-item    { display:flex; align-items:center; gap:8px; }
+    .hbar-name    { width:200px; font-size:.85rem; color:#374151; flex-shrink:0;
+                    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .hbar-wrap    { flex:1; background:#f3f4f6; border-radius:4px; height:22px; }
+    .hbar-fill    { height:100%; border-radius:4px; background:#3b82f6;
+                    display:flex; align-items:center; padding:0 6px;
+                    font-size:.75rem; font-weight:700; color:#fff; min-width:24px; }
+    .hbar-count   { width:40px; text-align:right; font-size:.82rem; font-weight:600; color:#374151; }
+
+    /* Gráfico de horas */
+    .hora-chart   { display:flex; align-items:flex-end; gap:4px; height:100px;
+                    border-bottom:2px solid #e5e7eb; padding:0 4px; margin-top:8px; }
+    .hora-bar     { flex:1; background:#3b82f6; border-radius:3px 3px 0 0; min-height:2px;
+                    cursor:default; transition:background .2s; position:relative; }
+    .hora-bar:hover { background:#1d4ed8; }
+    .hora-bar[title]::after { content:attr(title); position:absolute; bottom:108%; left:50%;
+                    transform:translateX(-50%); background:#1f2937; color:#fff; font-size:.7rem;
+                    padding:2px 6px; border-radius:4px; white-space:nowrap; pointer-events:none; }
+    .hora-labels  { display:flex; gap:4px; padding:0 4px; }
+    .hora-label   { flex:1; text-align:center; font-size:.62rem; color:#9ca3af; }
+
+    .mongo-tag { display:inline-block; font-size:.72rem; background:#4db33d; color:#fff;
+                 padding:2px 8px; border-radius:9999px; font-weight:700; margin-left:6px; }
+    .empty-msg { text-align:center; color:#9ca3af; padding:32px; font-size:.9rem; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <a href="/" class="header-logo">Lab<span>System</span></a>
+    <nav class="nav" aria-label="Menu principal">
+      <a href="/clientes.html">Clientes</a>
+      <a href="/fornecedores.html">Fornecedores</a>
+      <a href="/produtos.html">Produtos</a>
+      <a href="/estoque.html">Estoque</a>
+      <a href="/carrinho.html">Carrinho</a>
+      <a href="/avaliacoes.html">Avaliações</a>
+      <a href="/eventos.html">Eventos</a>
+      <a href="/relatorio.html" class="active">Relatório</a>
+      <a href="/usuarios.html" data-admin>Usuários</a>
+      <a href="/api-docs">API Docs</a>
+    </nav>
+    <div class="header-user">
+      <span class="header-user-nome" id="usuario-nome"></span>
+      <span class="badge" id="usuario-role"></span>
+      <button class="btn btn-sm btn-outline" onclick="logout()">Sair</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="container">
+
+      <h1 class="page-title">Relatório Black Friday <span class="mongo-tag">MongoDB Aggregation</span></h1>
+
+      <div style="display:flex;gap:10px;margin-bottom:16px">
+        <button class="btn btn-primary" onclick="carregar()">↻ Atualizar Relatório</button>
+        <button class="btn btn-secondary" onclick="semearEAtualizar()">🌱 Gerar Dados de Teste</button>
+      </div>
+
+      <!-- Cards de métricas -->
+      <div class="metric-grid" id="metric-grid">
+        <div class="metric-card"><div class="metric-value">—</div><div class="metric-label">Total de Eventos</div></div>
+        <div class="metric-card"><div class="metric-value">—</div><div class="metric-label">Pedidos Criados</div></div>
+        <div class="metric-card"><div class="metric-value">—</div><div class="metric-label">Receita Total</div></div>
+        <div class="metric-card"><div class="metric-value">—</div><div class="metric-label">Taxa de Conversão</div></div>
+        <div class="metric-card"><div class="metric-value">—</div><div class="metric-label">Clientes Únicos</div></div>
+      </div>
+
+      <!-- Funil de conversão -->
+      <div class="card" style="margin-top:20px">
+        <p class="card-title">Funil de Conversão</p>
+        <p style="font-size:.82rem;color:#6b7280;margin-bottom:12px">
+          Calculado com <code>$group</code> no MongoDB — mostra onde os clientes abandonam o processo de compra.
+        </p>
+        <div class="funnel" id="funil"></div>
+      </div>
+
+      <!-- Top produtos visualizados e adicionados ao carrinho -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+        <div class="card">
+          <p class="card-title">Top 5 — Mais Visualizados</p>
+          <p style="font-size:.78rem;color:#9ca3af;margin-bottom:10px">Pipeline: <code>$match → $group → $sort → $limit</code></p>
+          <div class="hbar-list" id="top-visualizados"></div>
+        </div>
+        <div class="card">
+          <p class="card-title">Top 5 — Mais Adicionados ao Carrinho</p>
+          <p style="font-size:.78rem;color:#9ca3af;margin-bottom:10px">Pipeline: <code>$match → $group → $sort → $limit</code></p>
+          <div class="hbar-list" id="top-carrinho"></div>
+        </div>
+      </div>
+
+      <!-- Distribuição por hora -->
+      <div class="card" style="margin-top:16px">
+        <p class="card-title">Volume de Eventos por Hora</p>
+        <p style="font-size:.82rem;color:#6b7280;margin-bottom:4px">Identifica picos de acesso durante a Black Friday.</p>
+        <div class="hora-chart" id="hora-chart"></div>
+        <div class="hora-labels" id="hora-labels"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="footer">LabSystem &copy; 2026</footer>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/relatorio.js"></script>
+</body>
+</html>

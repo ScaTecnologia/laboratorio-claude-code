@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LabSystem — Estoque</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .est-alto   { color:#10b981; font-weight:600; }
+    .est-baixo  { color:#f59e0b; font-weight:600; }
+    .est-zero   { color:#ef4444; font-weight:600; }
+    .est-res    { color:#8b5cf6; font-weight:600; }
+    .ttl-chip   { font-size:.78rem; background:#f3f4f6; padding:2px 8px; border-radius:9999px; color:#6b7280; }
+    .info-box   { background:#eff6ff; border-left:4px solid #3b82f6; padding:12px 16px; border-radius:6px; font-size:.88rem; line-height:1.6; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <a href="/" class="header-logo">Lab<span>System</span></a>
+    <nav class="nav" aria-label="Menu principal">
+      <a href="/clientes.html">Clientes</a>
+      <a href="/fornecedores.html">Fornecedores</a>
+      <a href="/produtos.html">Produtos</a>
+      <a href="/estoque.html" class="active">Estoque</a>
+      <a href="/carrinho.html">Carrinho</a>
+      <a href="/avaliacoes.html">Avaliações</a>
+      <a href="/eventos.html">Eventos</a>
+      <a href="/relatorio.html">Relatório</a>
+      <a href="/usuarios.html" data-admin>Usuários</a>
+      <a href="/api-docs">API Docs</a>
+    </nav>
+    <div class="header-user">
+      <span class="header-user-nome" id="usuario-nome"></span>
+      <span class="badge" id="usuario-role"></span>
+      <button class="btn btn-sm btn-outline" onclick="logout()">Sair</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="container">
+
+      <h1 class="page-title">Gestão de Estoque — Reservas Redis</h1>
+
+      <!-- Explicação didática -->
+      <div class="card">
+        <p class="card-title">Como funciona a reserva de estoque</p>
+        <div class="info-box">
+          <strong>Black Friday sem overselling:</strong> quando um cliente inicia o checkout, o sistema reserva as unidades
+          no Redis por <strong>10 minutos</strong> usando um script Lua atômico. Se o pagamento não for concluído,
+          a reserva expira automaticamente e o estoque volta a ficar disponível para outros clientes.
+          <br><br>
+          <strong>Coluna "Reservado (Redis)"</strong> = unidades bloqueadas para checkouts em andamento.
+          <strong>Coluna "Disponível"</strong> = Estoque − Reservado = o que realmente pode ser vendido agora.
+        </div>
+      </div>
+
+      <!-- Tabela de estoque -->
+      <div class="card">
+        <p class="card-title">
+          Estoque atual
+          <button class="btn btn-sm btn-secondary" onclick="carregar()" style="margin-left:12px">↻ Atualizar</button>
+        </p>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Produto</th>
+                <th scope="col">Em Estoque (DB)</th>
+                <th scope="col">Reservado (Redis)</th>
+                <th scope="col">Disponível</th>
+                <th scope="col">TTL Reserva</th>
+                <th scope="col" id="col-acoes" hidden>Atualizar Qtd</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-body"></tbody>
+          </table>
+        </div>
+        <div class="mensagem" id="msg-estoque" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- Simular reserva -->
+      <div class="card">
+        <p class="card-title">Simular Reserva no Redis</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="sel-produto-reserva">Produto</label>
+            <select id="sel-produto-reserva"></select>
+          </div>
+          <div class="form-group">
+            <label for="qtd-reserva">Quantidade</label>
+            <input type="number" id="qtd-reserva" min="1" value="1" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="reservar()">🔒 Reservar (10 min)</button>
+          <button class="btn btn-secondary" onclick="liberarReserva()">🔓 Liberar Reserva</button>
+        </div>
+        <div class="mensagem" id="msg-reserva" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- Confirmar venda (Admin) -->
+      <div class="card" id="card-confirmar" hidden>
+        <p class="card-title">Confirmar Venda — Debitar Estoque</p>
+        <p style="font-size:.88rem;color:#666;margin-bottom:12px">
+          Simula a aprovação do pagamento: debita o estoque no banco e remove a reserva do Redis.
+        </p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="sel-produto-confirmar">Produto</label>
+            <select id="sel-produto-confirmar"></select>
+          </div>
+          <div class="form-group">
+            <label for="qtd-confirmar">Quantidade vendida</label>
+            <input type="number" id="qtd-confirmar" min="1" value="1" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="confirmarVenda()">✅ Confirmar Venda</button>
+        </div>
+        <div class="mensagem" id="msg-confirmar" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- Atualizar estoque (Admin) -->
+      <div class="card" id="card-atualizar" hidden>
+        <p class="card-title">Atualizar Quantidade em Estoque (Admin)</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="sel-produto-atualizar">Produto</label>
+            <select id="sel-produto-atualizar"></select>
+          </div>
+          <div class="form-group">
+            <label for="qtd-nova">Nova quantidade</label>
+            <input type="number" id="qtd-nova" min="0" value="0" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="atualizarEstoque()">Salvar Quantidade</button>
+        </div>
+        <div class="mensagem" id="msg-atualizar" role="alert" aria-live="polite"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="footer">LabSystem &copy; 2026</footer>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/estoque.js"></script>
+</body>
+</html>

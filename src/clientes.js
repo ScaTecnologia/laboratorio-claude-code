@@ -25,7 +25,11 @@ async function criar(dados) {
   return rows[0];
 }
 
-async function listar() {
+async function listar(limit = null, offset = 0) {
+  if (limit !== null) {
+    const { rows } = await pool.query('SELECT * FROM clientes ORDER BY id LIMIT $1 OFFSET $2', [limit, offset]);
+    return rows;
+  }
   const { rows } = await pool.query('SELECT * FROM clientes ORDER BY id');
   return rows;
 }

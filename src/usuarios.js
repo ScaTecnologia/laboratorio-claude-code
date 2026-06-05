@@ -63,7 +63,11 @@ async function criar(nome, email, senha, role = 'Atendente') {
   return rows[0];
 }
 
-async function listar() {
+async function listar(limit = null, offset = 0) {
+  if (limit !== null) {
+    const { rows } = await pool.query('SELECT id, nome, email, role FROM usuarios ORDER BY id LIMIT $1 OFFSET $2', [limit, offset]);
+    return rows;
+  }
   const { rows } = await pool.query('SELECT id, nome, email, role FROM usuarios ORDER BY id');
   return rows;
 }

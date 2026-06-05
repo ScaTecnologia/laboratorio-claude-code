@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import psycopg2
 import psycopg2.extras
+import re
 
 app = Flask(__name__)
 
@@ -17,6 +18,18 @@ CAMPOS = ['nomefantasia', 'nomeempresa', 'endereco', 'bairro', 'cidade', 'estado
 
 def get_conn():
     return psycopg2.connect(**DB)
+
+
+def validar_cnpj(cnpj):
+    cnpj = re.sub(r'\D', '', str(cnpj))
+    if len(cnpj) != 14 or len(set(cnpj)) == 1:
+        return False
+    def digito(c, pesos):
+        s = sum(int(c[i]) * pesos[i] for i in range(len(pesos)))
+        r = s % 11
+        return 0 if r < 2 else 11 - r
+    return (int(cnpj[12]) == digito(cnpj, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]) and
+            int(cnpj[13]) == digito(cnpj, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]))
 
 
 def init_db():
@@ -42,9 +55,14 @@ def init_db():
 
 @app.route('/fornecedores', methods=['GET'])
 def listar():
+    limit  = request.args.get('limit',  type=int)
+    offset = request.args.get('offset', 0, type=int)
     with get_conn() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute('SELECT * FROM fornecedores ORDER BY id')
+            if limit is not None:
+                cur.execute('SELECT * FROM fornecedores ORDER BY id LIMIT %s OFFSET %s', (limit, offset))
+            else:
+                cur.execute('SELECT * FROM fornecedores ORDER BY id')
             return jsonify([dict(r) for r in cur.fetchall()])
 
 
@@ -64,6 +82,8 @@ def criar():
     data = request.get_json() or {}
     if not data.get('nomeempresa'):
         return jsonify({'erro': 'Nome da empresa é obrigatório'}), 400
+    if data.get('cnpj') and not validar_cnpj(data['cnpj']):
+        return jsonify({'erro': 'CNPJ inválido'}), 400
     valores = [data.get(c) for c in CAMPOS]
     with get_conn() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -80,6 +100,8 @@ def criar():
 @app.route('/fornecedores/<int:fid>', methods=['PUT'])
 def atualizar(fid):
     data = request.get_json() or {}
+    if 'cnpj' in data and data['cnpj'] and not validar_cnpj(data['cnpj']):
+        return jsonify({'erro': 'CNPJ inválido'}), 400
     sets, valores = [], []
     for campo in CAMPOS:
         if campo in data:

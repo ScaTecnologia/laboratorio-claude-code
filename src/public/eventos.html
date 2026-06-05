@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LabSystem — Eventos</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    .badge-PRODUTO_VISUALIZADO { background:#3b82f6; color:#fff; }
+    .badge-ADICIONADO_CARRINHO { background:#10b981; color:#fff; }
+    .badge-CHECKOUT_INICIADO   { background:#f59e0b; color:#fff; }
+    .badge-PEDIDO_CRIADO       { background:#8b5cf6; color:#fff; }
+    .badge-PAGAMENTO_APROVADO  { background:#059669; color:#fff; }
+    .badge-PAGAMENTO_RECUSADO  { background:#ef4444; color:#fff; }
+    .evento-dados { font-size:.78rem; color:#6b7280; font-family:monospace; }
+    .mongo-tag { display:inline-block; font-size:.72rem; background:#4db33d; color:#fff;
+                 padding:2px 8px; border-radius:9999px; font-weight:700; margin-left:6px; }
+    .info-box  { background:#f0fdf4; border-left:4px solid #10b981; padding:12px 16px;
+                 border-radius:6px; font-size:.88rem; line-height:1.6; }
+    .filter-bar { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; padding-bottom:4px; }
+    .filter-bar select, .filter-bar input { padding:6px 10px; border:1px solid #d1d5db;
+                         border-radius:6px; font-size:.9rem; }
+    .total-badge { font-size:.82rem; color:#6b7280; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <a href="/" class="header-logo">Lab<span>System</span></a>
+    <nav class="nav" aria-label="Menu principal">
+      <a href="/clientes.html">Clientes</a>
+      <a href="/fornecedores.html">Fornecedores</a>
+      <a href="/produtos.html">Produtos</a>
+      <a href="/estoque.html">Estoque</a>
+      <a href="/carrinho.html">Carrinho</a>
+      <a href="/avaliacoes.html">Avaliações</a>
+      <a href="/eventos.html" class="active">Eventos</a>
+      <a href="/relatorio.html">Relatório</a>
+      <a href="/usuarios.html" data-admin>Usuários</a>
+      <a href="/api-docs">API Docs</a>
+    </nav>
+    <div class="header-user">
+      <span class="header-user-nome" id="usuario-nome"></span>
+      <span class="badge" id="usuario-role"></span>
+      <button class="btn btn-sm btn-outline" onclick="logout()">Sair</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="container">
+
+      <h1 class="page-title">Eventos do Sistema <span class="mongo-tag">MongoDB</span></h1>
+
+      <!-- Info educativa -->
+      <div class="card">
+        <div class="info-box">
+          Cada ação do usuário gera um <strong>documento MongoDB</strong> com schema flexível.
+          <code>PRODUTO_VISUALIZADO</code> armazena nome e preço do produto;
+          <code>PEDIDO_CRIADO</code> armazena o pedidoId e total — estruturas completamente diferentes,
+          impossíveis de modelar com eficiência em uma única tabela SQL.
+        </div>
+      </div>
+
+      <!-- Ações -->
+      <div class="card">
+        <p class="card-title">Dados de demonstração</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="semearDados()">🌱 Semear Dados Black Friday (~150 eventos)</button>
+          <button class="btn btn-secondary" onclick="carregar()">↻ Atualizar</button>
+          <button id="btn-limpar" class="btn btn-danger" onclick="limparEventos()" hidden>🗑️ Limpar Todos</button>
+        </div>
+        <div class="mensagem" id="mensagem" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="card">
+        <p class="card-title">Filtrar eventos <span id="total-badge" class="total-badge"></span></p>
+        <div class="filter-bar">
+          <div>
+            <label for="filtro-tipo" style="font-size:.85rem;display:block;margin-bottom:3px">Tipo</label>
+            <select id="filtro-tipo" onchange="carregar()">
+              <option value="">— Todos os tipos —</option>
+              <option value="PRODUTO_VISUALIZADO">Produto Visualizado</option>
+              <option value="ADICIONADO_CARRINHO">Adicionado ao Carrinho</option>
+              <option value="CHECKOUT_INICIADO">Checkout Iniciado</option>
+              <option value="PEDIDO_CRIADO">Pedido Criado</option>
+              <option value="PAGAMENTO_APROVADO">Pagamento Aprovado</option>
+              <option value="PAGAMENTO_RECUSADO">Pagamento Recusado</option>
+            </select>
+          </div>
+          <div>
+            <label for="filtro-cliente" style="font-size:.85rem;display:block;margin-bottom:3px">ID do Cliente</label>
+            <input type="number" id="filtro-cliente" placeholder="ex: 1" style="width:100px" oninput="debounceCarregar()" />
+          </div>
+          <div>
+            <label for="filtro-pedido" style="font-size:.85rem;display:block;margin-bottom:3px">Pedido ID</label>
+            <input type="text" id="filtro-pedido" placeholder="ex: PED-123" style="width:160px" oninput="debounceCarregar()" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de eventos -->
+      <div class="card">
+        <p class="card-title">Últimos eventos</p>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Tipo</th>
+                <th scope="col">Cliente</th>
+                <th scope="col">Data/Hora</th>
+                <th scope="col">Dados</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-body">
+              <tr><td colspan="4" class="vazio">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="paginacao" style="display:flex;gap:8px;margin-top:12px;align-items:center"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="footer">LabSystem &copy; 2026</footer>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/eventos.js"></script>
+</body>
+</html>
