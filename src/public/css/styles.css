@@ -337,6 +337,90 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
 
 .login-form .form-group + .form-group { margin-top: 16px; }
 
+/* ── Landing page ────────────────────────────────────── */
+
+.hero {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  padding: 80px 24px;
+  text-align: center;
+  color: #fff;
+}
+
+.hero-content { max-width: 640px; margin: 0 auto; }
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+  color: #fff;
+}
+
+.hero-title span { color: #5dade2; }
+
+.hero-subtitle {
+  font-size: 1.15rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 32px;
+  line-height: 1.7;
+}
+
+.btn-lg { padding: 14px 32px; font-size: 1rem; }
+
+.landing-container { max-width: 960px; }
+
+.section-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.feature-card { text-align: center; }
+
+.feature-icon {
+  font-size: 2.4rem;
+  margin-bottom: 12px;
+}
+
+.feature-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 10px;
+}
+
+.feature-card p {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+}
+
+.cta-card {
+  text-align: center;
+  padding: 40px;
+}
+
+.cta-card h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 10px;
+}
+
+.cta-card p {
+  color: var(--color-text-muted);
+  margin-bottom: 24px;
+}
+
 /* ── Responsive ──────────────────────────────────────── */
 
 @media (max-width: 600px) {
@@ -348,4 +432,8 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
   .main  { padding: 20px 12px; }
   .card  { padding: 20px 16px; }
   .login-card { padding: 28px 20px; }
+  .hero { padding: 48px 16px; }
+  .hero-title { font-size: 2rem; }
+  .feature-grid { grid-template-columns: 1fr; }
+  .cta-card { padding: 28px 16px; }
 }

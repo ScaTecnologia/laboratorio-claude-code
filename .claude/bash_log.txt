@@ -120,3 +120,92 @@ curl -s http://localhost:3000/usuarios.html | grep -o "<title>.*</title>"
 [2026-06-04 19:22:22] mkdir -p "C:\Users\SilvaAl1\OneDrive - Unisys\Desktop\Treinamento\Claude\laboratorio-claude-code\docs"
 [2026-06-04 19:28:47] mkdir -p "C:\Users\SilvaAl1\OneDrive - Unisys\Desktop\Treinamento\Claude\laboratorio-claude-code\.claude\skills\context-recovery"
 [2026-06-04 19:30:58] cd "C:\Users\SilvaAl1\OneDrive - Unisys\Desktop\Treinamento\Claude\laboratorio-claude-code" && git log --oneline -10 && echo "---" && git status --short
+[2026-06-04 20:26:37] d=$PWD; while :; do grep -Hm1 '^description:' "$d"/.claude/skills/*/SKILL.md 2>/dev/null; [ -e "$d/.git" ] || [ "$d" = / ] && break; d=$(dirname "$d"); done
+[2026-06-04 20:27:07] cd "C:/Users/SilvaAl1/OneDrive - Unisys/Desktop/Treinamento/Claude/laboratorio-claude-code" && python --version && pip --version
+[2026-06-04 20:27:45] cd "C:/Users/SilvaAl1/OneDrive - Unisys/Desktop/Treinamento/Claude/laboratorio-claude-code" && pip install -r requirements.txt -q 2>&1 | tail -5
+[2026-06-04 20:28:06] cd "C:/Users/SilvaAl1/OneDrive - Unisys/Desktop/Treinamento/Claude/laboratorio-claude-code" && node src/server.js > /tmp/node_server.log 2>&1 &
+echo "Node PID: $!"
+[2026-06-04 20:28:25] cd "C:/Users/SilvaAl1/OneDrive - Unisys/Desktop/Treinamento/Claude/laboratorio-claude-code" && python src/fornecedores_api.py > /tmp/python_server.log 2>&1 &
+echo "Python PID: $!"
+[2026-06-04 20:28:33] sleep 3 && cat /tmp/node_server.log && echo "---PYTHON---" && cat /tmp/python_server.log
+[2026-06-04 20:28:49] netstat -ano | grep ":3000" | head -5
+[2026-06-04 20:29:02] taskkill //F //PID 24676 2>&1
+[2026-06-04 20:29:17] cd "C:/Users/SilvaAl1/OneDrive - Unisys/Desktop/Treinamento/Claude/laboratorio-claude-code" && node src/server.js > /tmp/node_server.log 2>&1 &
+sleep 3 && cat /tmp/node_server.log
+[2026-06-04 20:29:30] curl -s -c /tmp/cookies.txt -X POST http://localhost:3000/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"Alexaugusto2@gmail.com","senha":"admin123"}' | python -m json.tool
+[2026-06-04 20:29:37] curl -s -c /tmp/cookies.txt -X POST http://localhost:3000/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"alexaugusto2@gmail.com","senha":"admin123"}' | python -m json.tool
+[2026-06-04 20:29:58] cd "C:/Users/SilvaAl1/OneDrive - Unisys/Desktop/Treinamento/Claude/laboratorio-claude-code" && node -e "
+const { pool } = require('./src/db');
+pool.query('SELECT id, nome, email, role FROM usuarios').then(r => { console.log(JSON.stringify(r.rows, null, 2)); process.exit(); });
+"
+[2026-06-04 20:30:06] cd "C:/Users/SilvaAl1/OneDrive - Unisys/Desktop/Treinamento/Claude/laboratorio-claude-code" && node -e "
+const { pool } = require('./src/db');
+pool.query('SELECT id, email, LEFT(senha, 20) as senha_preview FROM usuarios WHERE id=1').then(r => { console.log(r.rows); process.exit(); });
+"
+[2026-06-04 20:30:15] cd "C:/Users/SilvaAl1/OneDrive - Unisys/Desktop/Treinamento/Claude/laboratorio-claude-code" && node -e "
+const { pool } = require('./src/db');
+pool.query('SELECT id, email, senha FROM usuarios WHERE id=1').then(r => { 
+  const row = r.rows[0];
+  console.log('email:', row.email);
+  console.log('senha length:', row.senha.length);
+  console.log('has colon:', row.senha.includes(':'));
+  console.log('senha:', row.senha);
+  process.exit(); 
+});
+"
+[2026-06-04 20:30:22] cd "C:/Users/SilvaAl1/OneDrive - Unisys/Desktop/Treinamento/Claude/laboratorio-claude-code" && node -e "
+const usuarios = require('./src/usuarios');
+usuarios.verificarSenha('admin123', '24cc65432f9cb30eb2d24b7e3173c130:f6a2db4bb72b613307ee83789b30b4333485598d7caaa384b0b23314dc5d7985ccbcd6fa643a39d51820814ad2320709e25cb1d94b33e65e884c368847cb32c6').then(ok => {
+  console.log('admin123 ok?', ok);
+  process.exit();
+});
+"
+[2026-06-04 20:30:30] cd "C:/Users/SilvaAl1/OneDrive - Unisys/Desktop/Treinamento/Claude/laboratorio-claude-code" && node -e "
+const usuarios = require('./src/usuarios');
+usuarios.inicializar().then(() => 
+  usuarios.atualizar(1, { senha: 'admin123' })
+).then(u => { console.log('Senha resetada para:', u.email); process.exit(); });
+"
+[2026-06-04 20:30:36] curl -s -c /tmp/cookies.txt -X POST http://localhost:3000/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"Alexaugusto2@gmail.com","senha":"admin123"}' | python -m json.tool
+[2026-06-04 20:30:41] curl -s -b /tmp/cookies.txt http://localhost:3000/me | python -m json.tool
+[2026-06-04 20:30:54] curl -sv -b /tmp/cookies.txt -X POST http://localhost:3000/fornecedores \
+  -H "Content-Type: application/json" \
+  -d '{"nomeempresa":"Distribuidora Alfa Ltda","nomefantasia":"Alfa","cnpj":"12.345.678/0001-99","cidade":"Sao Paulo","estado":"SP"}' 2>&1 | tail -20
+[2026-06-04 20:31:02] # Criar segundo fornecedor
+curl -s -b /tmp/cookies.txt -X POST http://localhost:3000/fornecedores \
+  -H "Content-Type: application/json" \
+  -d '{"nomeempresa":"Tech Supplies SA","nomefantasia":"TechSup","cnpj":"98.765.432/0001-11","telefone":"(21) 9999-0000","email":"vendas@techsup.com","cidade":"Rio de Janeiro","estado":"RJ"}'
+
+echo ""
+
+# GET lista
+curl -s -b /tmp/cookies.txt http://localhost:3000/fornecedores | python -m json.tool
+[2026-06-04 20:31:09] # PUT - atualizar id=1
+curl -s -b /tmp/cookies.txt -X PUT http://localhost:3000/fornecedores/1 \
+  -H "Content-Type: application/json" \
+  -d '{"telefone":"(11) 99887-6655","endereco":"Av. Industrial, 1200, Galpao 3"}' | python -m json.tool
+
+echo "---"
+
+# GET por id
+curl -s -b /tmp/cookies.txt http://localhost:3000/fornecedores/1 | python -m json.tool
+[2026-06-04 20:31:15] # DELETE id=2
+curl -s -b /tmp/cookies.txt -X DELETE http://localhost:3000/fornecedores/2 | python -m json.tool
+
+echo "---"
+
+# Sem cookie — deve retornar 401
+curl -s http://localhost:3000/fornecedores | python -m json.tool
+[2026-06-04 20:31:20] curl -s -b /tmp/cookies.txt http://localhost:3000/clientes | python -m json.tool | head -20
+[2026-06-04 20:31:32] for url in "/" "/login.html" "/clientes.html" "/fornecedores.html" "/usuarios.html" "/api-docs"; do
+  status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000$url)
+  echo "$status  $url"
+done
+[2026-06-04 20:38:55] python -m json.tool "C:/Users/SilvaAl1/OneDrive - Unisys/Desktop/Treinamento/Claude/laboratorio-claude-code/src/public/swagger.json" > /dev/null && echo "JSON válido" || echo "JSON inválido"
+[2026-06-04 20:39:02] curl -s http://localhost:3000/swagger.json | python -m json.tool | grep -E '"Fornecedor|/fornecedores|summary"' | head -20

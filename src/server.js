@@ -46,6 +46,28 @@ function servirArquivo(res, filePath) {
   res.end(fs.readFileSync(filePath));
 }
 
+function proxyParaPython(req, res) {
+  return new Promise(resolve => {
+    const options = {
+      hostname: 'localhost',
+      port: 3001,
+      path: req.url,
+      method: req.method,
+      headers: { 'Content-Type': 'application/json' },
+    };
+    const proxyReq = http.request(options, proxyRes => {
+      res.writeHead(proxyRes.statusCode, { 'Content-Type': 'application/json' });
+      proxyRes.pipe(res, { end: true });
+      resolve();
+    });
+    proxyReq.on('error', () => {
+      responder(res, 502, { erro: 'Serviço de fornecedores indisponível. Inicie o servidor Python: python src/fornecedores_api.py' });
+      resolve();
+    });
+    req.pipe(proxyReq, { end: true });
+  });
+}
+
 // ── Server ────────────────────────────────────────────────────────────────────
 
 const server = http.createServer(async (req, res) => {
@@ -58,8 +80,9 @@ const server = http.createServer(async (req, res) => {
   // ── Páginas estáticas ──────────────────────────────────────────────────────
 
   if (!recurso) return servirArquivo(res, path.join(__dirname, 'public', 'index.html'));
-  if (url === '/login.html') return servirArquivo(res, path.join(__dirname, 'public', 'login.html'));
-  if (url === '/api-docs')   return servirArquivo(res, path.join(__dirname, 'public', 'swagger.html'));
+  if (url === '/login.html')        return servirArquivo(res, path.join(__dirname, 'public', 'login.html'));
+  if (url === '/fornecedores.html') return servirArquivo(res, path.join(__dirname, 'public', 'fornecedores.html'));
+  if (url === '/api-docs')          return servirArquivo(res, path.join(__dirname, 'public', 'swagger.html'));
 
   // ── Auth ───────────────────────────────────────────────────────────────────
 
@@ -143,6 +166,13 @@ const server = http.createServer(async (req, res) => {
       return ok ? responder(res, 200, { mensagem: 'Cliente removido' }) : responder(res, 404, { erro: 'Cliente não encontrado' });
     }
     return responder(res, 405, { erro: 'Método não permitido' });
+  }
+
+  // ── CRUD Fornecedores — proxy para Python (porta 3001) ────────────────────
+
+  if (recurso === 'fornecedores') {
+    if (!sessao) return responder(res, 401, { erro: 'Não autenticado' });
+    return proxyParaPython(req, res);
   }
 
   // ── Arquivos estáticos ─────────────────────────────────────────────────────

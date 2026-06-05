@@ -1,20 +1,22 @@
 # PROJECT_CONTEXT.md
 
-Contexto completo do projeto construído durante a sessão de laboratório com Claude Code.
+Contexto completo do projeto construído durante as sessões de laboratório com Claude Code.
 
 ---
 
 ## Visão Geral
 
-**Nome:** LabSystem  
-**Objetivo:** Aplicação Node.js full-stack com autenticação, CRUD de Usuários e CRUD de Clientes, interface web responsiva e documentação interativa via Swagger.  
-**Runtime:** Node.js (CommonJS)  
-**Banco de dados:** PostgreSQL — `localhost:5151` — banco `laboratorio`  
-**Porta da aplicação:** `3000`
+**Nome:** LabSystem
+**Objetivo:** Aplicação Node.js full-stack com autenticação, CRUD de Usuários, CRUD de Clientes e CRUD de Fornecedores, interface web responsiva e documentação interativa via Swagger.
+**Runtime principal:** Node.js (CommonJS)
+**Serviço auxiliar:** Python 3 + Flask (CRUD de Fornecedores)
+**Banco de dados:** PostgreSQL — `localhost:5151` — banco `laboratorio`
+**Porta Node.js:** `3000`
+**Porta Python:** `3001`
 
 ---
 
-## O que foi construído nesta sessão
+## Sessão 1 — Construção base
 
 ### 1. CRUD de Usuários em memória
 - Ponto de partida: funções `criar`, `listar`, `buscar`, `atualizar`, `deletar` em `src/usuarios.js` operando sobre um array em memória.
@@ -68,38 +70,84 @@ Contexto completo do projeto construído durante a sessão de laboratório com C
 
 ---
 
+## Sessão 2 — Fornecedores, landing page e documentação
+
+### 11. CRUD de Fornecedores com backend Python
+- Criado `src/fornecedores_api.py` — API Flask rodando na porta 3001.
+- Criado `requirements.txt` com dependências `flask>=3.0.0` e `psycopg2-binary>=2.9.9`.
+- Tabela `fornecedores` criada automaticamente pelo Python na inicialização.
+- Campos: `id`, `nomefantasia`, `nomeempresa`, `endereco`, `bairro`, `cidade`, `estado`, `email`, `telefone`, `cnpj`.
+- Campo `nomeempresa` obrigatório; todos os demais são opcionais.
+
+### 12. Proxy Node.js → Python
+- `src/server.js` atualizado com a função `proxyParaPython(req, res)`.
+- O Node.js valida a sessão antes de fazer proxy — o Python não implementa autenticação.
+- Corpo da requisição é pipado diretamente (sem re-parsear o JSON), preservando o payload original.
+- Erro 502 retornado caso o servidor Python esteja fora do ar, com mensagem orientando como iniciá-lo.
+- Rota `/fornecedores.html` adicionada ao servidor Node.js.
+
+### 13. Landing page comercial
+- `src/public/index.html` completamente reescrito — não redireciona mais automaticamente.
+- Exibe hero com gradiente, grid de 4 cards de funcionalidades e card de call-to-action.
+- Verifica sessão via `GET /me`: se logado, mostra nome/badge e botão "Sair"; se não logado, mostra botão "Entrar".
+- Adicionadas classes CSS ao `styles.css`: `.hero`, `.feature-grid`, `.feature-card`, `.cta-card`, `.btn-lg`, `.landing-container`, `.section-title`.
+
+### 14. Navegação atualizada
+- Link "Fornecedores" adicionado ao menu de todas as páginas: `index.html`, `clientes.html`, `usuarios.html` e `fornecedores.html`.
+- Ordem do menu: Clientes → Fornecedores → Usuários (Admin) → API Docs.
+
+### 15. Swagger atualizado
+- Adicionadas rotas de Fornecedores: `GET/POST /fornecedores` e `GET/PUT/DELETE /fornecedores/{id}`.
+- Adicionados schemas `Fornecedor` e `FornecedorInput` com os 10 campos.
+- Tag "Fornecedores" criada como grupo separado no Swagger UI.
+- Descrição geral da API atualizada para mencionar o proxy Node→Python.
+- Resposta `502` documentada em todas as rotas de Fornecedores.
+
+### 16. DOCS.md reescrito
+- Reescrita completa — a versão anterior documentava apenas a fase inicial do projeto.
+- Agora cobre os 23 arquivos ativos do projeto com funções, responsabilidades e tabelas de rotas.
+- Inclui tabela completa do design system CSS, schemas das 3 tabelas e seção de dependências Python.
+
+---
+
 ## Estrutura de arquivos
 
 ```
 laboratorio-claude-code/
 ├── src/
-│   ├── server.js          # HTTP server, roteamento, auth middleware
-│   ├── usuarios.js        # CRUD usuários + hash de senha + migração
-│   ├── clientes.js        # CRUD clientes
-│   ├── db.js              # Conexão PostgreSQL (dois pools)
-│   ├── sessoes.js         # Sessões em memória (Map)
-│   ├── soma.js            # Utilitário de exemplo
-│   ├── soma.test.js       # Testes da soma
-│   ├── usuarios.test.js   # Testes do CRUD de usuários (requer DB)
+│   ├── server.js               # HTTP server Node.js, roteamento, auth, proxy
+│   ├── usuarios.js             # CRUD usuários + hash de senha + migração
+│   ├── clientes.js             # CRUD clientes
+│   ├── sessoes.js              # Sessões em memória (Map)
+│   ├── db.js                   # Conexão PostgreSQL (dois pools)
+│   ├── fornecedores_api.py     # API Python Flask — CRUD Fornecedores (porta 3001)
+│   ├── soma.js                 # Utilitário de exemplo
+│   ├── soma.test.js            # Testes da soma
+│   ├── usuarios.test.js        # Testes do CRUD de usuários (requer DB)
+│   ├── index.js                # Arquivo de exploração inicial (não usado)
 │   └── public/
-│       ├── index.html         # Redirect inteligente
-│       ├── login.html         # Tela de login
-│       ├── clientes.html      # CRUD de clientes
-│       ├── usuarios.html      # CRUD de usuários (Admin)
-│       ├── swagger.html       # Swagger UI (CDN)
-│       ├── swagger.json       # Especificação OpenAPI 3.0
+│       ├── index.html          # Landing page comercial
+│       ├── login.html          # Tela de login
+│       ├── clientes.html       # CRUD de clientes
+│       ├── fornecedores.html   # CRUD de fornecedores
+│       ├── usuarios.html       # CRUD de usuários (Admin)
+│       ├── swagger.html        # Swagger UI (CDN)
+│       ├── swagger.json        # Especificação OpenAPI 3.0
 │       ├── css/
-│       │   └── styles.css     # Design system completo
+│       │   └── styles.css      # Design system completo
 │       └── js/
-│           ├── auth.js        # verificarAuth, configurarHeader, logout
-│           ├── login.js       # Lógica do formulário de login
-│           ├── usuarios.js    # CRUD de usuários no frontend
-│           └── clientes.js    # CRUD de clientes no frontend
+│           ├── auth.js         # verificarAuth, configurarHeader, logout
+│           ├── login.js        # Lógica do formulário de login
+│           ├── usuarios.js     # CRUD de usuários no frontend
+│           ├── clientes.js     # CRUD de clientes no frontend
+│           └── fornecedores.js # CRUD de fornecedores no frontend
 ├── docs/
-│   └── PROJECT_CONTEXT.md # Este arquivo
-├── DOCS.md                # Documentação técnica de DevOps
-├── CLAUDE.md              # Instruções do projeto para o Claude
-└── package.json           # Node.js — dependência: pg ^8.21.0
+│   ├── PROJECT_CONTEXT.md      # Este arquivo
+│   └── ARCHITECTURE.md        # Diagramas, camadas, fluxos, segurança
+├── DOCS.md                     # Descrição técnica de cada arquivo
+├── CLAUDE.md                   # Instruções do projeto para o Claude Code
+├── package.json                # Node.js — dependência: pg ^8.21.0
+└── requirements.txt            # Python — flask >=3.0.0, psycopg2-binary >=2.9.9
 ```
 
 ---
@@ -135,6 +183,25 @@ CREATE TABLE clientes (
 );
 ```
 
+### Tabela `fornecedores`
+
+```sql
+CREATE TABLE fornecedores (
+  id           SERIAL PRIMARY KEY,
+  nomefantasia TEXT,
+  nomeempresa  TEXT NOT NULL,
+  endereco     TEXT,
+  bairro       TEXT,
+  cidade       TEXT,
+  estado       TEXT,
+  email        TEXT,
+  telefone     TEXT,
+  cnpj         TEXT
+);
+```
+
+> `usuarios` e `clientes` são criadas pelo Node.js na inicialização. `fornecedores` é criada pelo Python na inicialização.
+
 ---
 
 ## Rotas da API
@@ -147,13 +214,13 @@ CREATE TABLE clientes (
 | GET    | `/me`     | Livre  | Retorna usuário logado  |
 
 ### Usuários — Admin only
-| Método | Rota             | Descrição              |
-|--------|------------------|------------------------|
-| GET    | `/usuarios`      | Lista todos            |
-| GET    | `/usuarios/:id`  | Busca por ID           |
-| POST   | `/usuarios`      | Cria (nome+email+senha+role) |
-| PUT    | `/usuarios/:id`  | Atualiza (senha opcional) |
-| DELETE | `/usuarios/:id`  | Remove (id=1 protegido) |
+| Método | Rota             | Descrição                         |
+|--------|------------------|-----------------------------------|
+| GET    | `/usuarios`      | Lista todos                       |
+| GET    | `/usuarios/:id`  | Busca por ID                      |
+| POST   | `/usuarios`      | Cria (nome + email + senha + role) |
+| PUT    | `/usuarios/:id`  | Atualiza (senha opcional)         |
+| DELETE | `/usuarios/:id`  | Remove (id=1 protegido)           |
 
 ### Clientes — Autenticado
 | Método | Rota            | Descrição     |
@@ -164,15 +231,25 @@ CREATE TABLE clientes (
 | PUT    | `/clientes/:id` | Atualiza      |
 | DELETE | `/clientes/:id` | Remove        |
 
+### Fornecedores — Autenticado (proxy → Python :3001)
+| Método | Rota                 | Descrição                          |
+|--------|----------------------|------------------------------------|
+| GET    | `/fornecedores`      | Lista todos                        |
+| GET    | `/fornecedores/:id`  | Busca por ID                       |
+| POST   | `/fornecedores`      | Cria (`nomeempresa` obrigatório)    |
+| PUT    | `/fornecedores/:id`  | Atualiza campos fornecidos         |
+| DELETE | `/fornecedores/:id`  | Remove                             |
+
 ### Páginas e estáticos
-| Rota              | Arquivo servido              |
-|-------------------|------------------------------|
-| `/`               | `index.html` (redirect)      |
-| `/login.html`     | Tela de login                |
-| `/clientes.html`  | CRUD de clientes             |
-| `/usuarios.html`  | CRUD de usuários             |
-| `/api-docs`       | Swagger UI                   |
-| `/css/*`, `/js/*` | Estáticos de `src/public/`   |
+| Rota                  | Arquivo servido                  |
+|-----------------------|----------------------------------|
+| `/`                   | `index.html` (landing page)      |
+| `/login.html`         | Tela de login                    |
+| `/clientes.html`      | CRUD de clientes                 |
+| `/fornecedores.html`  | CRUD de fornecedores             |
+| `/usuarios.html`      | CRUD de usuários                 |
+| `/api-docs`           | Swagger UI                       |
+| `/css/*`, `/js/*`     | Estáticos de `src/public/`       |
 
 ---
 
@@ -180,11 +257,11 @@ CREATE TABLE clientes (
 
 | Campo | Valor |
 |-------|-------|
-| Email | `Alexaugusto2@gmail.com` (usuário id=1 existente) |
-| Senha | `admin123` (definida automaticamente na migração) |
+| Email | `Alexaugusto2@gmail.com` (usuário id=1) |
+| Senha | `admin123` |
 | Role  | `Admin` |
 
-> A senha deve ser alterada após o primeiro acesso via tela de Usuários.
+> A senha deve ser alterada após o primeiro acesso.
 
 ---
 
@@ -193,11 +270,15 @@ CREATE TABLE clientes (
 ```bash
 # Instalar dependências
 npm install
+pip install -r requirements.txt
 
-# Iniciar o servidor
+# Terminal 1 — Servidor Node.js (porta 3000)
 node src/server.js
 
-# Rodar testes
+# Terminal 2 — API Python Fornecedores (porta 3001)
+python src/fornecedores_api.py
+
+# Testes
 node src/soma.test.js
 node src/usuarios.test.js   # requer banco ativo
 ```
@@ -206,7 +287,9 @@ node src/usuarios.test.js   # requer banco ativo
 
 | URL | Descrição |
 |-----|-----------|
-| `http://localhost:3000` | Aplicação (redireciona automaticamente) |
+| `http://localhost:3000` | Landing page |
+| `http://localhost:3000/clientes.html` | CRUD Clientes |
+| `http://localhost:3000/fornecedores.html` | CRUD Fornecedores |
 | `http://localhost:3000/api-docs` | Swagger UI |
 
 ---
@@ -217,20 +300,39 @@ node src/usuarios.test.js   # requer banco ativo
 |---------|---------------|
 | `crypto.scrypt` para senhas | Módulo nativo do Node.js — sem dependência extra; algoritmo recomendado para hashing de senhas |
 | Sessões em memória (`Map`) | Simplicidade; adequado para laboratório — em produção usar Redis ou BD |
-| Sem Express | Projeto usa apenas `http` nativo para minimizar dependências |
+| Sem Express no Node.js | Projeto usa apenas `http` nativo para minimizar dependências |
 | Cookie `HttpOnly` | Impede acesso ao token por JavaScript, mitigando XSS |
-| Proteção de rota server-side | A API retorna 401/403 independentemente do frontend — segurança real está no backend |
-| CSS/JS separados do HTML | Seguindo a skill `frontend-layout-system` para facilitar reutilização entre páginas |
+| Proteção de rota server-side | A API retorna 401/403 independentemente do frontend |
+| CSS/JS separados do HTML | Seguindo a skill `frontend-layout-system` para reutilização entre páginas |
 | Swagger via CDN | Sem instalação de pacote; arquivo `swagger.json` mantido manualmente |
+| Python Flask para Fornecedores | Exigência de laboratório — demonstra integração de dois backends distintos |
+| Auth centralizada no Node.js | O Python não valida sessão — o Node.js age como gateway e só repassa requisições autenticadas |
+| Proxy via `req.pipe(proxyReq)` | Encaminha o body sem re-parsear — mantém o payload original intacto |
+| Landing page sem redirect | `index.html` tornou-se vitrine comercial — o redirect automático foi removido |
 
 ---
 
-## Skills criadas nesta sessão
+## Pendências e próximos passos
+
+| Item | Tipo | Prioridade |
+|------|------|------------|
+| Sessões persistentes (Redis ou tabela no BD) | Melhoria de infraestrutura | Média |
+| `usuarios.test.js` desatualizado para testes com senha/role | Dívida técnica | Baixa |
+| Paginação nas listagens (clientes, fornecedores) | Funcionalidade | Baixa |
+| Máscara de CNPJ no campo de fornecedores | UX | Baixa |
+| Validação de formato de CNPJ no backend Python | Segurança/validação | Média |
+| Refatorar `server.js` em `routes/` e `middlewares/` | Estrutura de código | Baixa |
+| Supervisord ou PM2 para gerenciar os dois processos | DevOps | Baixa |
+| HTTPS para ambiente de produção | Segurança | Alta (produção) |
+
+---
+
+## Skills criadas
 
 | Skill | Descrição |
 |-------|-----------|
 | `frontend-layout-system` | Padrão visual para páginas HTML/CSS/JS — cores, layout, componentes, acessibilidade, responsividade |
-| `context-recovery` | Recupera contexto do projeto ao iniciar nova sessão — lê documentos na ordem certa, verifica git status e estado real dos arquivos |
+| `context-recovery` | Recupera contexto do projeto ao iniciar nova sessão — lê documentos na ordem certa, verifica git status e arquivos reais |
 
 ---
 
@@ -238,15 +340,22 @@ node src/usuarios.test.js   # requer banco ativo
 
 | Arquivo | Conteúdo |
 |---------|----------|
-| `CLAUDE.md` | Regras, comandos, URLs, credenciais e skills para o Claude |
-| `DOCS.md` | Descrição técnica de cada arquivo do projeto |
-| `docs/PROJECT_CONTEXT.md` | Este arquivo — contexto completo da sessão |
-| `docs/ARCHITECTURE.md` | Diagramas, camadas, fluxos de auth, segurança e evolução futura |
+| `CLAUDE.md` | Regras, comandos, URLs, credenciais e skills para o Claude Code |
+| `DOCS.md` | Descrição técnica completa de todos os 23 arquivos do projeto |
+| `docs/PROJECT_CONTEXT.md` | Este arquivo — histórico e contexto de todas as sessões |
+| `docs/ARCHITECTURE.md` | Diagramas, camadas, fluxos de auth, segurança, proxy e evolução futura |
 
 ---
 
 ## Dependências
 
-| Pacote | Versão     | Uso                              |
-|--------|------------|----------------------------------|
-| `pg`   | `^8.21.0`  | Driver PostgreSQL (node-postgres) |
+### Node.js
+| Pacote | Versão    | Uso                               |
+|--------|-----------|-----------------------------------|
+| `pg`   | `^8.21.0` | Driver PostgreSQL (node-postgres) |
+
+### Python
+| Pacote            | Versão    | Uso                                        |
+|-------------------|-----------|--------------------------------------------|
+| `flask`           | `>=3.0.0` | Framework HTTP da API de Fornecedores      |
+| `psycopg2-binary` | `>=2.9.9` | Driver PostgreSQL para Python              |

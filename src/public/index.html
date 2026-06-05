@@ -2,13 +2,98 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>LabSystem</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LabSystem — Sistema de Gestão Comercial</title>
+  <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
+
+  <header class="header">
+    <a href="/" class="header-logo">Lab<span>System</span></a>
+    <nav class="nav" aria-label="Menu principal">
+      <a href="/clientes.html">Clientes</a>
+      <a href="/fornecedores.html">Fornecedores</a>
+      <a href="/usuarios.html" data-admin>Usuários</a>
+      <a href="/api-docs">API Docs</a>
+    </nav>
+    <div class="header-user">
+      <span class="header-user-nome" id="usuario-nome"></span>
+      <span class="badge" id="usuario-role"></span>
+      <button class="btn btn-sm btn-outline" id="btn-logout" onclick="logout()" style="display:none">Sair</button>
+      <a href="/login.html" class="btn btn-sm btn-outline" id="btn-login">Entrar</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-content">
+      <h1 class="hero-title">Lab<span>System</span></h1>
+      <p class="hero-subtitle">Plataforma integrada de gestão comercial para empresas que buscam eficiência, controle e crescimento sustentável.</p>
+      <a href="/clientes.html" class="btn btn-primary btn-lg">Acessar o Sistema</a>
+    </div>
+  </section>
+
+  <main class="main">
+    <div class="container landing-container">
+
+      <h2 class="section-title">Tudo que sua empresa precisa em um só lugar</h2>
+
+      <div class="feature-grid">
+        <div class="card feature-card">
+          <div class="feature-icon">👥</div>
+          <h3>Gestão de Clientes</h3>
+          <p>Cadastre e gerencie sua carteira de clientes com informações completas de contato, endereço e localização. Acesse de qualquer dispositivo com total segurança.</p>
+        </div>
+        <div class="card feature-card">
+          <div class="feature-icon">🏭</div>
+          <h3>Cadastro de Fornecedores</h3>
+          <p>Centralize os dados de todos os seus fornecedores — CNPJ, razão social, nome fantasia, contatos e endereços. Agilize processos de compra e negociação.</p>
+        </div>
+        <div class="card feature-card">
+          <div class="feature-icon">🔐</div>
+          <h3>Controle de Acesso</h3>
+          <p>Defina permissões por perfil: Admin, Atendente e Visitante. Cada colaborador acessa apenas o que precisa, com autenticação segura e sessões protegidas.</p>
+        </div>
+        <div class="card feature-card">
+          <div class="feature-icon">📋</div>
+          <h3>API Documentada</h3>
+          <p>Integre o LabSystem com outros sistemas da sua empresa. Nossa API REST é totalmente documentada via Swagger, com exemplos práticos e schemas detalhados.</p>
+        </div>
+      </div>
+
+      <div class="card cta-card">
+        <h2>Pronto para transformar sua gestão?</h2>
+        <p>Faça login com suas credenciais e comece a usar todas as funcionalidades do sistema agora mesmo.</p>
+        <a href="/login.html" class="btn btn-primary">Fazer Login</a>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="footer">LabSystem &copy; 2026 — Plataforma de Gestão Comercial</footer>
+
+  <script src="/js/auth.js"></script>
   <script>
-    fetch('/me')
-      .then(r => { window.location.href = r.ok ? '/clientes.html' : '/login.html'; })
-      .catch(() => { window.location.href = '/login.html'; });
+    (async () => {
+      try {
+        const res = await fetch('/me');
+        if (res.ok) {
+          const u = await res.json();
+          document.getElementById('usuario-nome').textContent = u.nome;
+          const badge = document.getElementById('usuario-role');
+          badge.textContent = u.role;
+          badge.className = `badge badge-${u.role.toLowerCase()}`;
+          document.getElementById('btn-logout').style.display = '';
+          document.getElementById('btn-login').style.display = 'none';
+          if (u.role !== 'Admin') {
+            document.querySelectorAll('[data-admin]').forEach(el => el.style.display = 'none');
+          }
+        } else {
+          document.querySelectorAll('[data-admin]').forEach(el => el.style.display = 'none');
+        }
+      } catch {
+        document.querySelectorAll('[data-admin]').forEach(el => el.style.display = 'none');
+      }
+    })();
   </script>
 </body>
 </html>

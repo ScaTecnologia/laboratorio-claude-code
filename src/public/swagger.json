@@ -3,7 +3,7 @@
   "info": {
     "title": "LabSystem API",
     "version": "2.0.0",
-    "description": "API REST do LabSystem — Usuários e Clientes com autenticação por sessão."
+    "description": "API REST do LabSystem — Usuários, Clientes e Fornecedores com autenticação por sessão.\n\n> **Fornecedores** são servidos via proxy Node.js → Python Flask (porta 3001). O Node.js valida a sessão antes de repassar a requisição."
   },
   "servers": [{ "url": "http://localhost:3000" }],
   "paths": {
@@ -121,6 +121,86 @@
       }
     },
 
+    "/fornecedores": {
+      "get": {
+        "tags": ["Fornecedores"],
+        "summary": "Listar todos os fornecedores",
+        "description": "Requer sessão autenticada. Proxiado para a API Python na porta 3001.",
+        "responses": {
+          "200": {
+            "description": "Lista de fornecedores",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Fornecedor" } } } }
+          },
+          "401": { "description": "Não autenticado" },
+          "502": { "description": "Serviço Python indisponível" }
+        }
+      },
+      "post": {
+        "tags": ["Fornecedores"],
+        "summary": "Criar fornecedor",
+        "description": "Requer sessão autenticada. Campo `nomeempresa` é obrigatório.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FornecedorInput" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "Fornecedor criado",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Fornecedor" } } }
+          },
+          "400": { "description": "Nome da empresa é obrigatório" },
+          "401": { "description": "Não autenticado" },
+          "502": { "description": "Serviço Python indisponível" }
+        }
+      }
+    },
+
+    "/fornecedores/{id}": {
+      "get": {
+        "tags": ["Fornecedores"],
+        "summary": "Buscar fornecedor por ID",
+        "description": "Requer sessão autenticada.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "example": 1 }],
+        "responses": {
+          "200": {
+            "description": "Fornecedor encontrado",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Fornecedor" } } }
+          },
+          "401": { "description": "Não autenticado" },
+          "404": { "description": "Fornecedor não encontrado" }
+        }
+      },
+      "put": {
+        "tags": ["Fornecedores"],
+        "summary": "Atualizar fornecedor",
+        "description": "Requer sessão autenticada. Envie apenas os campos a alterar — os demais permanecem inalterados.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "example": 1 }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FornecedorInput" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Fornecedor atualizado",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Fornecedor" } } }
+          },
+          "401": { "description": "Não autenticado" },
+          "404": { "description": "Fornecedor não encontrado" }
+        }
+      },
+      "delete": {
+        "tags": ["Fornecedores"],
+        "summary": "Deletar fornecedor",
+        "description": "Requer sessão autenticada.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "example": 1 }],
+        "responses": {
+          "200": { "description": "Fornecedor removido" },
+          "401": { "description": "Não autenticado" },
+          "404": { "description": "Fornecedor não encontrado" }
+        }
+      }
+    },
+
     "/clientes": {
       "get": {
         "tags": ["Clientes"],
@@ -226,6 +306,38 @@
           "email": { "type": "string", "example": "maria@email.com" },
           "senha": { "type": "string", "example": "senha123" },
           "role":  { "type": "string", "example": "Atendente", "enum": ["Admin", "Atendente", "Visitante"] }
+        }
+      },
+
+      "Fornecedor": {
+        "type": "object",
+        "properties": {
+          "id":           { "type": "integer", "example": 1 },
+          "nomeempresa":  { "type": "string",  "example": "Distribuidora Alfa Ltda" },
+          "nomefantasia": { "type": "string",  "example": "Alfa Distribuidora" },
+          "cnpj":         { "type": "string",  "example": "12.345.678/0001-99" },
+          "endereco":     { "type": "string",  "example": "Av. Industrial, 1200" },
+          "bairro":       { "type": "string",  "example": "Distrito Industrial" },
+          "cidade":       { "type": "string",  "example": "São Paulo" },
+          "estado":       { "type": "string",  "example": "SP" },
+          "email":        { "type": "string",  "example": "contato@alfa.com.br" },
+          "telefone":     { "type": "string",  "example": "(11) 3344-5566" }
+        }
+      },
+
+      "FornecedorInput": {
+        "type": "object",
+        "required": ["nomeempresa"],
+        "properties": {
+          "nomeempresa":  { "type": "string", "example": "Distribuidora Alfa Ltda" },
+          "nomefantasia": { "type": "string", "example": "Alfa Distribuidora" },
+          "cnpj":         { "type": "string", "example": "12.345.678/0001-99" },
+          "endereco":     { "type": "string", "example": "Av. Industrial, 1200" },
+          "bairro":       { "type": "string", "example": "Distrito Industrial" },
+          "cidade":       { "type": "string", "example": "São Paulo" },
+          "estado":       { "type": "string", "example": "SP" },
+          "email":        { "type": "string", "example": "contato@alfa.com.br" },
+          "telefone":     { "type": "string", "example": "(11) 3344-5566" }
         }
       },
 
