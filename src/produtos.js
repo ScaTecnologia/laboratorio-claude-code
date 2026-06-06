@@ -45,36 +45,67 @@ async function inicializar() {
 
 // Deleta as chaves de cache afetadas por uma mudança no produto
 async function invalidarCache(id = null) {
-  const keys = ['cache:produtos:lista'];
-  if (id) keys.push(`cache:produto:${id}`);
-  await redis.del(...keys);
+  // Apaga todas as variações de cache da lista (sem paginação e com paginação)
+  const listaKeys = await redis.keys('cache:produtos:lista*');
+  if (listaKeys.length) await redis.del(...listaKeys);
+  if (id) await redis.del(`cache:produto:${id}`);
 }
 
 // ── Leitura com cache ─────────────────────────────────────────────────────────
 
-async function listar() {
+// Retorna { origem, ttl, dados, total }
+// Sem limit: retorna todos os produtos (chave de cache sem sufixo)
+// Com limit: retorna a página solicitada (chave por página, com total real via COUNT OVER)
+async function listar(limit = null, offset = 0) {
+  const cacheKey = limit !== null
+    ? `cache:produtos:lista:${limit}:${offset}`
+    : 'cache:produtos:lista';
+
   // 1. Verifica o cache Redis (leitura rápida ~1ms)
-  const cached = await redis.get('cache:produtos:lista');
+  const cached = await redis.get(cacheKey);
   if (cached) {
-    const ttl = await redis.ttl('cache:produtos:lista');
-    return { origem: 'redis', ttl, dados: JSON.parse(cached) };
+    const ttl = await redis.ttl(cacheKey);
+    return { origem: 'redis', ttl, ...JSON.parse(cached) };
   }
 
   // 2. Cache miss — busca no PostgreSQL
-  const { rows } = await pool.query(`
-    SELECT p.id, p.nome, p.descricao, p.preco, p.ativo,
-           p.categoria_id, c.nome AS categoria,
-           COALESCE(e.quantidade, 0) AS estoque
-    FROM   produtos p
-    LEFT JOIN categorias c ON c.id = p.categoria_id
-    LEFT JOIN estoque    e ON e.produto_id = p.id
-    ORDER  BY p.id
-  `);
+  let rows, total;
+
+  if (limit !== null) {
+    // Paginado: COUNT(*) OVER() retorna o total sem segundo round-trip
+    const { rows: r } = await pool.query(`
+      SELECT p.id, p.nome, p.descricao, p.preco, p.ativo,
+             p.categoria_id, c.nome AS categoria,
+             COALESCE(e.quantidade, 0) AS estoque,
+             COUNT(*) OVER() AS total_count
+      FROM   produtos p
+      LEFT JOIN categorias c ON c.id = p.categoria_id
+      LEFT JOIN estoque    e ON e.produto_id = p.id
+      ORDER  BY p.id
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
+    total = r.length > 0 ? parseInt(r[0].total_count, 10) : 0;
+    rows  = r.map(({ total_count, ...rest }) => rest);
+  } else {
+    // Sem paginação: retorna todos
+    const { rows: r } = await pool.query(`
+      SELECT p.id, p.nome, p.descricao, p.preco, p.ativo,
+             p.categoria_id, c.nome AS categoria,
+             COALESCE(e.quantidade, 0) AS estoque
+      FROM   produtos p
+      LEFT JOIN categorias c ON c.id = p.categoria_id
+      LEFT JOIN estoque    e ON e.produto_id = p.id
+      ORDER  BY p.id
+    `);
+    total = r.length;
+    rows  = r;
+  }
 
   // 3. Armazena no Redis com TTL antes de retornar
-  await redis.setex('cache:produtos:lista', CACHE_TTL, JSON.stringify(rows));
+  const payload = { dados: rows, total };
+  await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(payload));
 
-  return { origem: 'banco', ttl: CACHE_TTL, dados: rows };
+  return { origem: 'banco', ttl: CACHE_TTL, ...payload };
 }
 
 async function buscar(id) {

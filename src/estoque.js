@@ -28,16 +28,36 @@ async function buscar(produtoId) {
   };
 }
 
-async function listar() {
-  const { rows } = await pool.query(`
-    SELECT e.produto_id, p.nome, e.quantidade
-    FROM   estoque e
-    JOIN   produtos p ON p.id = e.produto_id
-    ORDER  BY p.nome
-  `);
+// Retorna { dados, total } — total é o count real (sem paginação)
+// Sem limit: retorna todos os itens de estoque
+// Com limit: retorna a página solicitada com total real via COUNT OVER
+async function listar(limit = null, offset = 0) {
+  let rows, total;
+
+  if (limit !== null) {
+    const { rows: r } = await pool.query(`
+      SELECT e.produto_id, p.nome, e.quantidade,
+             COUNT(*) OVER() AS total_count
+      FROM   estoque e
+      JOIN   produtos p ON p.id = e.produto_id
+      ORDER  BY p.nome
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
+    total = r.length > 0 ? parseInt(r[0].total_count, 10) : 0;
+    rows  = r.map(({ total_count, ...rest }) => rest);
+  } else {
+    const { rows: r } = await pool.query(`
+      SELECT e.produto_id, p.nome, e.quantidade
+      FROM   estoque e
+      JOIN   produtos p ON p.id = e.produto_id
+      ORDER  BY p.nome
+    `);
+    total = r.length;
+    rows  = r;
+  }
 
   // Enriquece cada linha com dados de reserva vindos do Redis
-  return Promise.all(rows.map(async r => {
+  const dados = await Promise.all(rows.map(async r => {
     const reservado  = parseInt(await redis.get(`reserva:${r.produto_id}`) || '0', 10);
     const ttlReserva = await redis.ttl(`reserva:${r.produto_id}`);
     return {
@@ -47,6 +67,8 @@ async function listar() {
       reserva_ttl: ttlReserva > 0 ? ttlReserva : null,
     };
   }));
+
+  return { dados, total };
 }
 
 // ── Escrita no banco ───────────────────────────────────────────────────────────

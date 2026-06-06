@@ -57,8 +57,9 @@
         <p class="card-title">Adicionar ao Carrinho</p>
         <div class="form-grid">
           <div class="form-group col-2">
-            <label for="sel-produto">Produto</label>
-            <select id="sel-produto"><option value="">— Selecione —</option></select>
+            <label for="busca-produto">Buscar produto</label>
+            <input type="search" id="busca-produto" placeholder="Digite para filtrar..." oninput="filtrarProdutos(this.value)" autocomplete="off" />
+            <select id="sel-produto" style="margin-top:6px"><option value="">— Selecione —</option></select>
           </div>
           <div class="form-group">
             <label for="qtd-item">Quantidade</label>

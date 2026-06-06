@@ -1,4 +1,6 @@
 let usuarioLogado = null;
+let paginaAtual   = 0;
+const POR_PAGINA  = 20;
 
 (async () => {
   const usuario = await verificarAuth();
@@ -24,8 +26,10 @@ async function carregarCategorias() {
     cats.map(c => `<option value="${c.id}">${escHtml(c.nome)}</option>`).join('');
 }
 
-async function carregar() {
-  const res = await fetch('/produtos');
+async function carregar(pagina = 0) {
+  paginaAtual = pagina;
+  const params = new URLSearchParams({ limit: POR_PAGINA, offset: pagina * POR_PAGINA });
+  const res = await fetch(`/produtos?${params}`);
   if (!res.ok) return;
   const resultado = await res.json();
 
@@ -43,11 +47,13 @@ async function carregar() {
     ttlEl.textContent = `Cache renovado — expira em ${resultado.ttl}s`;
   }
 
-  const lista = resultado.dados || [];
-  const tbody = document.getElementById('tabela-body');
+  const lista  = resultado.dados || [];
+  const total  = resultado.total || 0;
+  const tbody  = document.getElementById('tabela-body');
 
   if (lista.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" class="vazio">Nenhum produto cadastrado. Use o formulário acima para adicionar.</td></tr>';
+    renderizarPaginacao(0, 0);
     return;
   }
 
@@ -71,6 +77,31 @@ async function carregar() {
       <td class="acoes">${acoes}</td>
     </tr>`;
   }).join('');
+
+  renderizarPaginacao(total, pagina);
+}
+
+function renderizarPaginacao(total, pagAtual) {
+  const el = document.getElementById('paginacao');
+  if (!el) return;
+  const totalPags = Math.ceil(total / POR_PAGINA);
+  const mostrando = Math.min(pagAtual * POR_PAGINA + POR_PAGINA, total);
+  const inicio    = total === 0 ? 0 : pagAtual * POR_PAGINA + 1;
+
+  if (totalPags <= 1) {
+    el.innerHTML = total > 0
+      ? `<span style="font-size:.85rem;color:#6b7280">${total} produto(s)</span>`
+      : '';
+    return;
+  }
+
+  el.innerHTML = `
+    <button class="btn btn-sm btn-secondary" onclick="carregar(${pagAtual - 1})" ${pagAtual === 0 ? 'disabled' : ''}>← Anterior</button>
+    <span style="font-size:.85rem;color:#6b7280">
+      ${inicio}–${mostrando} de ${total} produtos &nbsp;|&nbsp; Página ${pagAtual + 1} de ${totalPags}
+    </span>
+    <button class="btn btn-sm btn-secondary" onclick="carregar(${pagAtual + 1})" ${pagAtual >= totalPags - 1 ? 'disabled' : ''}>Próxima →</button>
+  `;
 }
 
 async function salvar(event) {
@@ -106,7 +137,7 @@ async function salvar(event) {
 
   mostrarMensagem(id ? 'Produto atualizado! Cache invalidado automaticamente.' : 'Produto criado!', 'ok');
   cancelarEdicao();
-  carregar();
+  carregar(id ? paginaAtual : 0);
 }
 
 async function editar(id) {
@@ -131,14 +162,14 @@ async function deletar(id) {
   const res = await fetch(`/produtos/${id}`, { method: 'DELETE' });
   if (!res.ok) return mostrarMensagem('Erro ao remover produto.', 'err');
   mostrarMensagem('Produto removido. Cache invalidado.', 'ok');
-  carregar();
+  carregar(paginaAtual);
 }
 
 async function limparCache() {
   const res = await fetch('/produtos/cache', { method: 'DELETE' });
   if (!res.ok) return mostrarMensagem('Erro ao limpar cache.', 'err');
   mostrarMensagem('Cache limpo! A próxima consulta irá ao banco de dados.', 'ok');
-  carregar();
+  carregar(paginaAtual);
 }
 
 function cancelarEdicao() {

@@ -138,4 +138,4 @@ def deletar(fid):
 if __name__ == '__main__':
     init_db()
     print('API de Fornecedores rodando em http://localhost:3001')
-    app.run(port=3001, debug=False)
+    app.run(host='127.0.0.1', port=3001, debug=False)

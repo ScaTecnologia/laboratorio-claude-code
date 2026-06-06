@@ -117,6 +117,16 @@ class RedisMock {
     return n;
   }
 
+  // Retorna chaves que casam com o padrão (suporta * como wildcard)
+  async keys(pattern) {
+    const regex = new RegExp('^' + pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$');
+    const result = [];
+    for (const [k] of this._store) {
+      if (regex.test(k) && this._ler(k)) result.push(k);
+    }
+    return result;
+  }
+
   // ── Eval (Lua simulado) — usado para reserva atômica de estoque ───────────
   // Node.js é single-threaded: verificar + incrementar aqui é igualmente atômico.
   async eval(script, numKeys, ...args) {

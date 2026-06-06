@@ -1,4 +1,7 @@
 let usuarioLogado = null;
+let todosItens    = [];   // cache client-side de toda a lista de estoque
+let paginaAtual   = 0;
+const POR_PAGINA  = 20;
 
 (async () => {
   const usuario = await verificarAuth();
@@ -15,26 +18,40 @@ let usuarioLogado = null;
   await carregar();
 })();
 
-async function carregar() {
+async function carregar(pagina = 0) {
+  paginaAtual = pagina;
   const res = await fetch('/estoque');
   if (!res.ok) return;
-  const lista = await res.json();
+  const data = await res.json();
+  // API retorna { dados, total } — todosItens recebe o array completo
+  todosItens = data.dados || data;
 
-  const tbody = document.getElementById('tabela-body');
+  popularSelects(todosItens);
+  renderizarPagina(paginaAtual);
+}
 
-  // Popula os selects de produtos nos formulários
+function popularSelects(lista) {
   const opts = lista.map(e => `<option value="${e.produto_id}">${escHtml(e.nome)}</option>`).join('');
+  const vazio = '<option value="">Nenhum produto</option>';
   ['sel-produto-reserva','sel-produto-confirmar','sel-produto-atualizar'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.innerHTML = opts || '<option value="">Nenhum produto</option>';
+    if (el) el.innerHTML = opts || vazio;
   });
+}
 
-  if (lista.length === 0) {
+function renderizarPagina(pagina) {
+  paginaAtual   = pagina;
+  const inicio  = pagina * POR_PAGINA;
+  const pagina_ = todosItens.slice(inicio, inicio + POR_PAGINA);
+  const tbody   = document.getElementById('tabela-body');
+
+  if (todosItens.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" class="vazio">Nenhum produto com estoque cadastrado. Acesse <a href="/produtos.html">Produtos</a> para criar.</td></tr>`;
+    renderizarPaginacao(0);
     return;
   }
 
-  tbody.innerHTML = lista.map(e => {
+  tbody.innerHTML = pagina_.map(e => {
     const estCls  = e.quantidade === 0 ? 'est-zero' : e.quantidade <= 5 ? 'est-baixo' : 'est-alto';
     const dispCls = e.disponivel  === 0 ? 'est-zero' : e.disponivel  <= 5 ? 'est-baixo' : 'est-alto';
     const resCls  = e.reservado > 0 ? 'est-res' : '';
@@ -54,6 +71,31 @@ async function carregar() {
       <td class="acoes">${editBtn}</td>
     </tr>`;
   }).join('');
+
+  renderizarPaginacao(todosItens.length);
+}
+
+function renderizarPaginacao(total) {
+  const el = document.getElementById('paginacao');
+  if (!el) return;
+  const totalPags = Math.ceil(total / POR_PAGINA);
+  const inicio    = total === 0 ? 0 : paginaAtual * POR_PAGINA + 1;
+  const fim       = Math.min(paginaAtual * POR_PAGINA + POR_PAGINA, total);
+
+  if (totalPags <= 1) {
+    el.innerHTML = total > 0
+      ? `<span style="font-size:.85rem;color:#6b7280">${total} produto(s) em estoque</span>`
+      : '';
+    return;
+  }
+
+  el.innerHTML = `
+    <button class="btn btn-sm btn-secondary" onclick="renderizarPagina(${paginaAtual - 1})" ${paginaAtual === 0 ? 'disabled' : ''}>← Anterior</button>
+    <span style="font-size:.85rem;color:#6b7280">
+      ${inicio}–${fim} de ${total} &nbsp;|&nbsp; Página ${paginaAtual + 1} de ${totalPags}
+    </span>
+    <button class="btn btn-sm btn-secondary" onclick="renderizarPagina(${paginaAtual + 1})" ${paginaAtual >= totalPags - 1 ? 'disabled' : ''}>Próxima →</button>
+  `;
 }
 
 function preencherAtualizar(produtoId, qtdAtual) {
@@ -82,7 +124,7 @@ async function reservar() {
     `Reserva criada! Total reservado: ${data.totalReservado} | Expira em: ${data.ttl}s`,
     'ok', 'msg-reserva'
   );
-  carregar();
+  carregar(paginaAtual);
 }
 
 async function liberarReserva() {
@@ -97,7 +139,7 @@ async function liberarReserva() {
 
   const data = await res.json();
   mostrarMensagem(`Reserva liberada. Reservado restante: ${data.reservado}`, 'ok', 'msg-reserva');
-  carregar();
+  carregar(paginaAtual);
 }
 
 async function confirmarVenda() {
@@ -116,7 +158,7 @@ async function confirmarVenda() {
   if (!res.ok) return mostrarMensagem(data.erro, 'err', 'msg-confirmar');
 
   mostrarMensagem('Venda confirmada! Estoque debitado no banco e reserva removida do Redis.', 'ok', 'msg-confirmar');
-  carregar();
+  carregar(paginaAtual);
 }
 
 async function atualizarEstoque() {
@@ -134,7 +176,7 @@ async function atualizarEstoque() {
   if (!res.ok) return mostrarMensagem('Erro ao atualizar estoque.', 'err', 'msg-atualizar');
 
   mostrarMensagem(`Estoque atualizado para ${quantidade} unidade(s). Cache invalidado.`, 'ok', 'msg-atualizar');
-  carregar();
+  carregar(paginaAtual);
 }
 
 function mostrarMensagem(texto, tipo, elId = 'msg-estoque') {

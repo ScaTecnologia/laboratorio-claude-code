@@ -1,4 +1,5 @@
-let ttlInterval = null;
+let ttlInterval   = null;
+let todosProdutos = [];   // cache client-side de todos os produtos com estoque
 
 (async () => {
   const usuario = await verificarAuth();
@@ -10,16 +11,34 @@ let ttlInterval = null;
 })();
 
 async function carregarProdutos() {
+  // Sem ?limit — retorna todos os produtos (necessário para popular o seletor completo)
   const res = await fetch('/produtos');
   if (!res.ok) return;
   const resultado = await res.json();
-  const sel = document.getElementById('sel-produto');
   const lista = resultado.dados || [];
 
+  // Mantém apenas ativos com estoque disponível
+  todosProdutos = lista.filter(p => p.ativo && parseInt(p.estoque) > 0);
+  renderizarOpcoesProdutos(todosProdutos);
+}
+
+function renderizarOpcoesProdutos(lista) {
+  const sel = document.getElementById('sel-produto');
   sel.innerHTML = '<option value="">— Selecione um produto —</option>' +
-    lista.filter(p => p.ativo && parseInt(p.estoque) > 0).map(p =>
+    lista.map(p =>
       `<option value="${p.id}">${escHtml(p.nome)} — R$ ${parseFloat(p.preco).toFixed(2)} (${p.estoque} em estoque)</option>`
     ).join('');
+}
+
+function filtrarProdutos(termo) {
+  const lower = termo.toLowerCase().trim();
+  const filtrados = lower
+    ? todosProdutos.filter(p => p.nome.toLowerCase().includes(lower))
+    : todosProdutos;
+  renderizarOpcoesProdutos(filtrados);
+  // Limpa seleção se o item filtrado não inclui o que estava selecionado
+  const sel = document.getElementById('sel-produto');
+  if (sel.value && !filtrados.find(p => String(p.id) === sel.value)) sel.value = '';
 }
 
 async function carregarCarrinho() {
