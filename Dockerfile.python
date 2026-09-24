@@ -9,10 +9,13 @@ WORKDIR /app
 ENV PYTHONUNBUFFERED=1
 RUN addgroup --system app && adduser --system --ingroup app app
 COPY requirements.txt ./
-# Atualiza as ferramentas de empacotamento da imagem base (versões antigas
-# de wheel/setuptools têm CVEs HIGH com correção disponível).
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
-    && pip install --no-cache-dir -r requirements.txt
+# Instala as dependências e depois remove as ferramentas de empacotamento
+# (pip/setuptools/wheel e as cópias em ensurepip): o runtime não precisa
+# delas, e elas carregam CVEs HIGH que o Trivy acusaria.
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip uninstall -y setuptools wheel \
+    && python -m pip uninstall -y pip \
+    && rm -rf /usr/local/lib/python3.10/ensurepip
 COPY src/fornecedores_api.py ./src/fornecedores_api.py
 USER app
 EXPOSE 3001
