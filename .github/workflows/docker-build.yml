@@ -86,7 +86,8 @@ jobs:
           name: image-node
       - run: docker load -i labsystem-node.tar
       - name: Trivy — scan da imagem
-        uses: aquasecurity/trivy-action@0.24.0
+        # Fixado por SHA do commit (v0.36.0): tags podem ser reapontadas, o SHA não.
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: "labsystem-node:${{ github.sha }}"
           severity: "CRITICAL,HIGH"
@@ -105,7 +106,8 @@ jobs:
           name: image-fornecedores
       - run: docker load -i labsystem-fornecedores.tar
       - name: Trivy — scan da imagem
-        uses: aquasecurity/trivy-action@0.24.0
+        # Fixado por SHA do commit (v0.36.0): tags podem ser reapontadas, o SHA não.
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: "labsystem-fornecedores:${{ github.sha }}"
           severity: "CRITICAL,HIGH"
