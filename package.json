@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node src/soma.test.js",
-    "lint": "eslint src --ext .js",
+    "lint": "eslint src",
     "test:unit": "node src/soma.test.js && node src/teste_mongo.js",
     "test:integration": "node src/usuarios.test.js && node src/teste_redis.js"
   },
@@ -14,10 +14,11 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "ioredis": "^6.0.0",
     "pg": "^8.23.0"
   },
   "devDependencies": {
-    "eslint": "^8.57.1"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.11.0",
+    "globals": "^17.12.0"
   }
 }

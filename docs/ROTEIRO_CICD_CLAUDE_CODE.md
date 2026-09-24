@@ -11,7 +11,7 @@
 - Conta no GitHub.
 - Git instalado e configurado localmente (`git config --global user.name/user.email`).
 - Claude Code configurado neste projeto (já está — veja `.claude/`).
-- Node.js 22+ e Python 3.13+ instalados (compatível com o que já roda localmente).
+- Node.js 24+ (LTS) e Python 3.13+ instalados (compatível com o que já roda localmente).
 
 ---
 
@@ -64,7 +64,7 @@ Antes do pipeline, é preciso ter lint e testes executáveis por linha de comand
 
 | Arquivo adicionado | Função |
 |---|---|
-| `.eslintrc.json` | Regras de lint para o JavaScript (`src/**/*.js`) |
+| `eslint.config.js` | Regras de lint para o JavaScript (`src/**/*.js`), formato flat config do ESLint 9+ (antes era `.eslintrc.json`) |
 | `.flake8` | Regras de lint para o Python (`src/fornecedores_api.py`) |
 | `requirements-dev.txt` | Dependências de desenvolvimento Python (flake8, pytest, bandit) |
 | `package.json` (atualizado) | `devDependencies` (eslint) e scripts `lint`, `test:unit`, `test:integration` |

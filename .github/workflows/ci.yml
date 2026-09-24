@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: "22"
+  NODE_VERSION: "24"       # LTS; manter igual ao FROM do Dockerfile
   PYTHON_VERSION: "3.13"   # manter igual ao FROM do Dockerfile.python
 
 # Menor privilégio: o GITHUB_TOKEN dos jobs só lê o repositório.
@@ -83,9 +83,8 @@ jobs:
       - run: pytest tests/ -v
 
   # ────────────────────────────────────────────────────────────────────────
-  # Testes de integração — usam um Postgres real, mas como *serviço do
-  # runner do GitHub* (não Docker local). Compatível com máquinas Unisys,
-  # que só restringem Docker no ambiente local do desenvolvedor.
+  # Testes de integração — usam um Postgres real como *serviço do runner
+  # do GitHub* (`services:`), na mesma porta 5151 do docker-compose local.
   # ────────────────────────────────────────────────────────────────────────
   test-integration:
     name: Testes de integração (Postgres)
