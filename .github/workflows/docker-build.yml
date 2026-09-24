@@ -37,6 +37,11 @@ on:
         type: boolean
         default: false
 
+# Menor privilégio: o GITHUB_TOKEN dos jobs só lê o repositório.
+# O job `publish` declara `packages: write` por conta própria.
+permissions:
+  contents: read
+
 jobs:
   # ──────────────────────────────────────────────────────────────────────
   # BUILD — gera a imagem a partir do Dockerfile correspondente.

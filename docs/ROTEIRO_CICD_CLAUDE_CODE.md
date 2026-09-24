@@ -21,10 +21,10 @@ O projeto já é um repositório git local (`git status` funciona), mas **sem re
 
 ```bash
 # 1. Crie um repositório vazio no GitHub (via site ou gh CLI)
-gh repo create laboratorio-claude-code --private --source=. --remote=origin
+gh repo create ScaTecnologia/laboratorio-claude-code --public --source=. --remote=origin
 
 # 2. Ou, se preferir pelo site: crie o repo no GitHub.com e depois:
-git remote add origin https://github.com/<seu-usuario>/laboratorio-claude-code.git
+git remote add origin git@github.com:ScaTecnologia/laboratorio-claude-code.git
 git branch -M main
 git push -u origin main
 ```
@@ -51,6 +51,10 @@ No GitHub: **Settings → Branches → Branch protection rules** para `main`:
 - Bloquear push direto na `main`.
 
 Isso implementa a prática "nunca há código em produção que não passou pela esteira", pilar central de DevOps.
+
+**Como foi feito neste laboratório** (via `gh api`, ruleset **"Proteger main"** — `Settings → Rules → Rulesets`): PR obrigatório com 1 aprovação de code owner, 8 checks obrigatórios (6 jobs do `ci.yml` + os 2 scans Trivy), sem force-push e sem deleção da `main`. Enquanto só existe uma conta, o **admin pode dispensar a aprovação** no merge (`gh pr merge --admin`) — o push direto continua bloqueado. Quando entrar o 2º dev, remova esse bypass no ruleset.
+
+> ⚠ Em repositório **privado** de conta pessoal **Free**, rulesets e Required reviewers de Environment **não são aplicados**. Por isso o repositório é público.
 
 ---
 
@@ -93,7 +97,7 @@ Esse é o arquivo central. Ele foi criado com os seguintes jobs, em ordem de exe
 1. **`lint-node`** — `npm ci` + `npm run lint`.
 2. **`lint-python`** — `pip install -r requirements-dev.txt` + `flake8`.
 3. **`test-unit`** — depende de `lint-node`; roda `npm run test:unit`, ou seja, `soma.test.js` (função pura) e `teste_mongo.js` — este último não precisa de MongoDB real: `src/mongo.js` é um **adaptador em memória** (ver comentário no topo do arquivo), então o teste roda sem nenhum serviço externo.
-4. **`test-integration`** — depende de `test-unit`; sobe um **serviço de banco** (`services: postgres`) usando o container oficial do Docker Hub *gerenciado pelo próprio runner do GitHub* (isso não é "usar Docker na sua máquina" — é a infraestrutura do GitHub, então não conflita com a restrição da Unisys); roda `npm run test:integration`, ou seja, `usuarios.test.js` e `teste_redis.js` (este último também usa Redis em memória via `src/redis.js`, mas depende do Postgres real para os módulos de produtos/estoque/carrinho).
+4. **`test-integration`** — depende de `test-unit`; sobe um **serviço de banco** (`services: postgres`) usando o container oficial do Docker Hub *gerenciado pelo próprio runner do GitHub* (é infraestrutura do GitHub, independente de haver Docker na sua máquina); roda `npm run test:integration`, ou seja, `usuarios.test.js` e `teste_redis.js` (este último também usa Redis em memória via `src/redis.js`, mas depende do Postgres real para os módulos de produtos/estoque/carrinho).
 5. **`security-scan`** — `npm audit --audit-level=high`, `pip-audit`, `bandit -r src/`.
 6. **`test-python-unit`** — `pytest tests/`.
 
@@ -139,38 +143,66 @@ Isso reforça, em nível de plataforma, o que o hook `security-guardrail.js` já
 
 ---
 
-## Passo 7 — CD com contêiner (Docker) — pronto, porém **inativo**
+## Passo 7 — CD com contêiner (Docker) — **ativo**
 
-Como as máquinas da Unisys usadas neste treinamento não permitem Docker, os artefatos foram criados **prontos para uso futuro em outra máquina**, mas configurados para **nunca rodar automaticamente**:
+> Histórico: nas máquinas Unisys do início do treinamento o Docker não era permitido, então estes artefatos nasceram "prontos, porém inativos" (gatilho só manual). Em 2026-09-24, numa máquina Linux com Docker, eles foram **ativados e validados de verdade** — o que está descrito abaixo é o estado atual.
 
 | Arquivo | Conteúdo |
 |---|---|
-| `Dockerfile` | Imagem para o serviço Node (`src/server.js`) |
-| `Dockerfile.python` | Imagem para a API Python (`src/fornecedores_api.py`) |
-| `docker-compose.yml` | Orquestra Node + Python + Postgres localmente (Redis/Mongo são adaptadores em memória, não precisam de serviço) |
-| `.github/workflows/docker-build.yml` | Workflow de build → scan → publish → deploy — gatilho **somente `workflow_dispatch`** (disparo manual pela aba Actions), nunca em `push`/`pull_request` |
+| `Dockerfile` | Imagem do serviço Node (`src/server.js`), multi-stage, usuário não-root, **sem npm no runtime** |
+| `Dockerfile.python` | Imagem da API Python (`src/fornecedores_api.py`), usuário não-root, **sem pip/setuptools/wheel no runtime** |
+| `docker-compose.yml` | Orquestra Postgres + Node + Python localmente (Redis/Mongo são adaptadores em memória, não precisam de serviço) |
+| `.github/workflows/docker-build.yml` | Build → scan → publish → deploy |
 
-O `docker-build.yml` tem 5 jobs, na ordem em que dados fluem entre eles (`needs:`):
+### 7.1 Rodando localmente
 
-1. **`build-node` / `build-python`** — constrói as imagens e as salva como artifact do workflow (não publica ainda).
-2. **`scan-node` / `scan-python`** — roda **Trivy** em cada imagem, procurando vulnerabilidades `CRITICAL`/`HIGH`. Se achar, o job falha e **nada depois dele roda** — nem publish, nem deploy. Esta é a camada de segurança da informação sobre os *containers*, equivalente ao `security-scan` do `ci.yml` para o código-fonte.
-3. **`publish`** (opcional, `push_image: true`) — só roda se as duas imagens passaram no scan; publica no GitHub Container Registry (`ghcr.io`).
-4. **`deploy-production`** (opcional, `deploy_production: true`) — só roda se as duas imagens passaram no scan **e** um revisor humano aprovar, porque o job usa `environment: production`, um **GitHub Environment protegido** (configure em `Settings → Environments → New environment → production → Required reviewers`). Sem essa aprovação, o job fica parado esperando — de propósito. Os comandos de deploy em si estão como placeholder (`echo`), já que este laboratório não tem servidor de produção real; em um projeto real, substituiria por SSH/kubectl/action do provedor de nuvem.
+```bash
+docker compose up --build -d     # sobe postgres (5151), node (3000) e fornecedores (3001)
+docker compose ps                # os 3 devem estar "Up"
+docker compose logs -f node      # logs
+docker compose down              # derruba (dados do Postgres ficam no volume)
+```
 
-Esse é o "portão de segurança" que impede uma imagem vulnerável, ou um deploy não autorizado por ninguém, de chegar em produção — mesmo com o gatilho sendo manual.
+Três ajustes foram necessários para o compose funcionar (e valem para qualquer projeto):
 
-### Como habilitar quando estiver em uma máquina com Docker permitido
+1. **Nada de `localhost` fixo no código.** Dentro de um container, `localhost` é o próprio container. Host/porta passaram a vir de variáveis de ambiente, com padrão `localhost` (então rodar sem Docker continua igual): `DB_HOST`/`DB_PORT` (Node e Python), `FORNECEDORES_HOST`/`FORNECEDORES_PORT` (proxy Node → Python) e `FLASK_HOST`. No compose, os serviços se enxergam pelo nome: `DB_HOST=postgres`, `FORNECEDORES_HOST=fornecedores`.
+2. **Flask precisa escutar em `0.0.0.0` dentro do container** (`FLASK_HOST=0.0.0.0`), senão a porta publicada não responde.
+3. **Publicar só o necessário.** Postgres e a API Python (que não tem autenticação) são publicados apenas em `127.0.0.1`; só o Node (3000) fica acessível na rede.
 
-1. Localmente: `docker compose up --build` para validar que sobe tudo.
-2. No GitHub: aba **Actions → docker-build → Run workflow** (disparo manual) para testar o build em CI sem alterar o gatilho.
-3. Só depois de validado manualmente algumas vezes, se desejar automatizar, edite `on:` em `docker-build.yml` adicionando `push: { branches: [main] }` — **decisão consciente, não faça isso enquanto estiver em máquina sem permissão de Docker.**
+### 7.2 O workflow `docker-build.yml`
 
-### Prompt sugerido para essa etapa (em outra máquina)
+| Evento | O que roda |
+|---|---|
+| `push` / `pull_request` na `main` | **Automático:** build das 2 imagens + scan Trivy |
+| `workflow_dispatch` (aba Actions → Run workflow) | Build + scan e, se marcado nos inputs, publish no GHCR e/ou deploy |
+
+Jobs, na ordem em que dados fluem entre eles (`needs:`):
+
+1. **`build-node` / `build-python`** — constrói as imagens e as salva como artifact do workflow.
+2. **`scan-node` / `scan-python`** — **Trivy** (`aquasecurity/trivy-action`, **fixada pelo SHA do commit**, não pela tag) procura vulnerabilidades `CRITICAL`/`HIGH` **com correção disponível** (`ignore-unfixed: true`). Se achar, o job falha e nada depois dele roda. Os dois scans são **checks obrigatórios** da `main` (Passo 2).
+3. **`publish`** (opcional) — publica no `ghcr.io`. Só com disparo manual e `push_image: true`.
+4. **`deploy-production`** (opcional) — só com disparo manual, `deploy_production: true` **e** aprovação humana no GitHub Environment `production` (Required reviewers). Os comandos de deploy são placeholder (`echo`) — não há servidor de produção real neste laboratório.
+
+**Regra de ouro:** build e scan podem ser automáticos; **publicar e fazer deploy, nunca**. Os jobs `publish` e `deploy-production` têm `if: github.event_name == 'workflow_dispatch' && ...`, e o hook `.claude/hooks/pipeline-guardrail.js` bloqueia qualquer edição do Claude Code que remova essa trava.
+
+### 7.3 Lições aprendidas ao ativar
+
+- **Scan quebrou no primeiro PR — e isso é bom.** As CVEs estavam em ferramentas que vêm na imagem base e o app não usa em runtime (npm na imagem Node; pip/setuptools/wheel na Python). A correção foi **remover essas ferramentas da imagem final**, não afrouxar o scan.
+- **CVEs sem correção** (pacotes do SO da imagem base ainda sem patch) são ignoradas com `ignore-unfixed: true`: o scan barra só o que dá para resolver.
+- **Tags de action podem sumir ou ser reapontadas.** A `trivy-action@0.24.0` deixou de existir (as tags foram recriadas com prefixo `v` após um incidente de cadeia de suprimentos). Fixar pelo SHA do commit evita as duas coisas.
+- Para reproduzir o scan do CI localmente:
+  ```bash
+  docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.70.0 \
+    image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 <imagem>
+  ```
+
+### Prompt sugerido para essa etapa
 
 ```
-Estou em uma máquina onde Docker é permitido. Rode `docker compose up --build`,
-verifique se os 5 serviços sobem (node, python, postgres, redis, mongo) e me
-avise se algum falhar, explicando a causa antes de tentar corrigir.
+Rode `docker compose up --build -d`, confirme que os 3 serviços sobem e que
+login, clientes e fornecedores funcionam em http://localhost:3000. Depois rode
+o mesmo scan Trivy do CI nas duas imagens e, se algo falhar, explique a causa
+antes de corrigir — sem afrouxar o scan.
 ```
 
 ---
@@ -244,18 +276,19 @@ atual nem na main.
 
 ## Checklist final
 
-- [ ] Repositório no GitHub com branch `main` protegida
-- [ ] `npm run lint` e `flake8` passam localmente
-- [ ] `.github/workflows/ci.yml` passa em um PR de teste
-- [ ] Dependabot e CodeQL habilitados
-- [ ] `docker-build.yml` existe, mas **não** dispara em push/PR
-- [ ] Job de scan (Trivy) roda antes de qualquer publish/deploy no `docker-build.yml`
-- [ ] Ambiente `production` criado com "Required reviewers" configurado
-- [ ] Skill, agente e hook de CI/CD presentes em `.claude/`
-- [ ] CODEOWNERS presente e "Require review from Code Owners" habilitado
-- [ ] Templates de Issue e Pull Request aparecem ao criar um novo
-- [ ] Board Kanban criado e ligado às Issues (`docs/BACKLOG_KANBAN.md`)
-- [ ] `CLAUDE.md` atualizado citando os novos artefatos
+- [x] Repositório no GitHub com branch `main` protegida
+- [x] `npm run lint` e `flake8` passam localmente
+- [x] `.github/workflows/ci.yml` passa em um PR de teste
+- [x] Dependabot (alerts, security updates e `.github/dependabot.yml`) e CodeQL habilitados
+- [x] Workflows declaram `permissions: contents: read` (menor privilégio — exigido pelo CodeQL)
+- [x] `docker-build.yml` roda build + scan em push/PR; publish/deploy só manual
+- [x] Job de scan (Trivy) roda antes de qualquer publish/deploy no `docker-build.yml`
+- [x] Ambiente `production` criado com "Required reviewers" configurado
+- [x] Skill, agente e hook de CI/CD presentes em `.claude/`
+- [x] CODEOWNERS presente e "Require review from Code Owners" habilitado
+- [x] Templates de Issue e Pull Request aparecem ao criar um novo
+- [x] Board Kanban criado e ligado às Issues (`docs/BACKLOG_KANBAN.md`)
+- [x] `CLAUDE.md` atualizado citando os novos artefatos
 
 ---
 
