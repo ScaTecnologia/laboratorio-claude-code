@@ -55,7 +55,7 @@ jobs:
         run: docker build -t labsystem-node:${{ github.sha }} -f Dockerfile .
       - name: Salvar imagem para os próximos jobs
         run: docker save labsystem-node:${{ github.sha }} -o labsystem-node.tar
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: image-node
           path: labsystem-node.tar
@@ -70,7 +70,7 @@ jobs:
         run: docker build -t labsystem-fornecedores:${{ github.sha }} -f Dockerfile.python .
       - name: Salvar imagem para os próximos jobs
         run: docker save labsystem-fornecedores:${{ github.sha }} -o labsystem-fornecedores.tar
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: image-fornecedores
           path: labsystem-fornecedores.tar
