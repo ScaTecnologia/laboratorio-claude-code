@@ -69,7 +69,7 @@ Se a máquina nova não tiver Postgres instalado localmente:
 ## 5. Verificar que está tudo igual — rode a mesma bateria desta sessão
 
 ```bash
-npm run lint                                    # esperado: 0 erros (alguns avisos são normais)
+npm run lint                                    # esperado: 0 problemas
 npm run test:unit                               # esperado: passa (não depende de banco)
 npm run test:integration                        # esperado: passa (precisa do Postgres do passo 4)
 flake8 src/ tests/ --config=.flake8              # esperado: 0 erros

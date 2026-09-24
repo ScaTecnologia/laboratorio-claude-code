@@ -83,7 +83,8 @@ Isto é o que falta para "levar o laboratório para valer" (itens riscados já f
 9. ~~Automações do board e triagem do Dependabot~~ — feito em 2026-09-24. Automações do board todas ligadas. Dependabot: **12 PRs mergeados** (pg, flask, psycopg2-binary, bandit, flake8, pytest 9, ioredis 6 — não usado pelo código —, e as actions checkout/setup-node/upload/download-artifact/login-action para runtime Node 24); **3 fechados** com justificativa: #6 Node 25 (sem LTS, sem suporte desde 2026-06-01), #13 ESLint 10 (exige migrar para `eslint.config.js`), #11 Python 3.14 só no Dockerfile. `dependabot.yml` agora ignora major de Node/ESLint e minor/major de Python.
 10. ~~Python 3.10 → 3.13~~ — feito em 2026-09-24 (o 3.10 perde suporte em 2026-10-31): CI (`PYTHON_VERSION`), `Dockerfile.python` (e caminho do `ensurepip` sem versão fixa) e docs.
 11. ~~ESLint 10, Node 24 LTS e `ioredis`~~ — feito em 2026-09-24: `.eslintrc.json` → `eslint.config.js` (flat config, mesmas regras, +`@eslint/js` e `globals` como devDependencies); Node 24 LTS no CI e no `Dockerfile` (suporte até 2028-04-30); `ioredis` removido (não era usado). PRs do Dependabot #23 (pip-audit) e #24 (setup-python 7) mergeados.
-12. **Próximos (opcionais):** limpar os 9 avisos antigos do ESLint (variáveis não usadas em `src/server.js`, `src/routes/carrinho.js` e testes); planejar Node 24 → 26 LTS depois de 2026-10-28.
+12. ~~Limpar os 9 avisos do ESLint~~ — feito em 2026-09-24: imports/variáveis não usados removidos de `src/server.js`, `src/routes/carrinho.js`, `src/teste_avaliacoes.js` e `src/teste_mongo.js`. `npm run lint` agora sai com **0 problemas**.
+13. **Próximo (opcional):** planejar Node 24 → 26 LTS depois de 2026-10-28.
 
 ---
 

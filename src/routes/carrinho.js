@@ -1,5 +1,4 @@
 const carrinhoModule = require('../carrinho');
-const estoqueModule  = require('../estoque');
 const eventoModule   = require('../eventos');
 const { parseCookies } = require('../middlewares/auth');
 
