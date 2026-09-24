@@ -4,7 +4,7 @@
 # Uso normal: `docker compose up --build`.
 # Isolado:    docker build -f Dockerfile.python -t labsystem-fornecedores .
 # ============================================================================
-FROM python:3.10-slim
+FROM python:3.13-slim
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1
 RUN addgroup --system app && adduser --system --ingroup app app
@@ -15,7 +15,7 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt \
     && pip uninstall -y setuptools wheel \
     && python -m pip uninstall -y pip \
-    && rm -rf /usr/local/lib/python3.10/ensurepip
+    && rm -rf /usr/local/lib/python3*/ensurepip
 COPY src/fornecedores_api.py ./src/fornecedores_api.py
 USER app
 EXPOSE 3001
