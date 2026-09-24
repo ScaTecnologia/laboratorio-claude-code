@@ -81,6 +81,6 @@ sem aplicar mudanças ainda.
 | Agente DevOps | `.claude/agents/devops-engineer.md` |
 | Hook de governança do pipeline | `.claude/hooks/pipeline-guardrail.js` |
 | Workflow de CI ativo | `.github/workflows/ci.yml` |
-| Workflow de build Docker (manual/inativo) | `.github/workflows/docker-build.yml` |
+| Workflow Docker (build+scan automáticos; publish/deploy manuais) | `.github/workflows/docker-build.yml` |
 | Guia teórico | `docs/DEVOPS_GUIA.md` |
 | Roteiro de implementação | `docs/ROTEIRO_CICD_CLAUDE_CODE.md` |

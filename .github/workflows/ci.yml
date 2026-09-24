@@ -19,6 +19,11 @@ env:
   NODE_VERSION: "22"
   PYTHON_VERSION: "3.10"
 
+# Menor privilégio: o GITHUB_TOKEN dos jobs só lê o repositório.
+# Um job que precise de mais declara o próprio bloco `permissions:`.
+permissions:
+  contents: read
+
 jobs:
   # ────────────────────────────────────────────────────────────────────────
   # Lint — rápido e barato, roda primeiro para dar feedback em segundos.

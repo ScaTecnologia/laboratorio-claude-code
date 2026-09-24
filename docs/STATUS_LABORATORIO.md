@@ -79,7 +79,8 @@ Isto é o que falta para "levar o laboratório para valer" (itens riscados já f
 5. ~~Criar o board Kanban~~ — https://github.com/users/ScaTecnologia/projects/2 ("LabSystem — Esteira"), colunas Backlog / To Do / Em Progresso / Em Revisão / Concluído, vinculado ao repositório. **Pendente manual:** ligar as automações nativas (aba do projeto → ⋯ → Workflows: "Item added", "Item closed", "Pull request merged", "Auto-add to project") — a API do GitHub não permite ligá-las; até lá, mover os cards à mão.
 6. ~~Rodar o exercício de múltiplos devs~~ — feito no GitHub real em 2026-09-24: issues #16 (Ana) e #17 (Bruno), PRs #18 e #19, conflito real no `git rebase origin/main` do Bruno, resolvido combinando as duas mudanças (`listar()` agora: limite padrão 100 + `ORDER BY nome`), CI verde nos dois PRs, merge commits preservando autoria. Obs.: `clientes.html` não pagina, então passa a mostrar no máximo 100 clientes.
 7. ~~Testar `docker compose up --build` e o `docker-build.yml` no GitHub~~ — feito em 2026-09-24 (build+scan verdes em push e PR; trivy-action fixada por SHA v0.36.0).
-8. **Próximos:** ligar as automações do board (item 5); triar os PRs do Dependabot; atualizar `docs/ROTEIRO_CICD_CLAUDE_CODE.md` (Passo 7), `docs/SETUP_NOVA_MAQUINA.md` e os `.docx`, que ainda descrevem o Docker como inativo.
+8. ~~Corrigir alertas do CodeQL e atualizar a documentação do Docker~~ — feito em 2026-09-24: `permissions: contents: read` nos dois workflows (11 alertas `actions/missing-workflow-permissions`); `ROTEIRO_CICD_CLAUDE_CODE.md` (Passo 7 reescrito com o que foi feito de verdade), `SETUP_NOVA_MAQUINA.md`, `DEVOPS_GUIA.md`, agente `devops-engineer` atualizados. Os `.docx` são regenerados dos `.md` com `sh docs/atualizar_docx.sh` (pandoc via Docker) — rode sempre que mudar um `.md` de `docs/`.
+9. **Próximos:** ligar as automações do board (item 5); triar os PRs do Dependabot (#1–#15).
 
 ---
 

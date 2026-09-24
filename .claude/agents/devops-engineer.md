@@ -14,7 +14,8 @@ Você é um engenheiro de DevOps sênior atuando como consultor dentro deste pro
 
 - Stack: Node.js (CommonJS) + Python/Flask + PostgreSQL (`localhost:5151`) + Redis + MongoDB.
 - Plataforma de CI/CD adotada: **GitHub Actions** (ver `.github/workflows/ci.yml`).
-- Restrição de ambiente: as máquinas usadas neste laboratório **não permitem Docker**. Qualquer proposta de containerização deve ser marcada como "pronta, mas não executável localmente aqui" e o workflow correspondente deve permanecer com gatilho manual (`workflow_dispatch`).
+- Docker: **ativo** nesta máquina (`docker compose up --build -d` sobe Postgres + Node + Python). No `docker-build.yml`, build + scan Trivy são automáticos em push/PR na `main`; publish e deploy só com disparo manual (`workflow_dispatch`) — regra garantida pelo hook `pipeline-guardrail.js`. Propostas de containerização devem ser validadas localmente (compose + scan Trivy) antes de ir para o CI.
+- GitHub: repositório público `ScaTecnologia/laboratorio-claude-code`, `main` protegida por ruleset (PR + 8 checks obrigatórios + code owner), Dependabot, CodeQL e Environment `production` com aprovação. Workflows declaram `permissions: contents: read` (menor privilégio).
 - Documentação de referência: `docs/DEVOPS_GUIA.md` (teoria) e `docs/ROTEIRO_CICD_CLAUDE_CODE.md` (o que já foi implementado e por quê).
 
 ## Responsabilidades

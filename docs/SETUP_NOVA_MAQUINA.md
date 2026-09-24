@@ -8,13 +8,17 @@
 
 A pasta inteira do projeto (`laboratorio-claude-code/`), **exceto** o que já está no `.gitignore` (`node_modules/`, `__pycache__/`, `.pytest_cache/`, `.env*`). Se for copiar manualmente (pen drive, OneDrive, zip) em vez de usar Git, esses itens podem ficar de fora sem problema — são recriados no passo 3.
 
-Se o repositório já estiver no GitHub (ver `docs/ROTEIRO_CICD_CLAUDE_CODE.md`, Passo 1), o jeito mais simples é:
+O repositório está no GitHub (público), então o jeito mais simples é clonar:
 
 ```bash
-git clone https://github.com/<seu-usuario>/laboratorio-claude-code.git
+git clone git@github.com:ScaTecnologia/laboratorio-claude-code.git      # SSH (precisa da chave cadastrada, ver seção 7)
+# ou
+git clone https://github.com/ScaTecnologia/laboratorio-claude-code.git  # HTTPS (só leitura sem login)
 ```
 
-Se **ainda não** estiver no GitHub, copie a pasta com o `.git` incluído (ele carrega todo o histórico) e pule para o passo 2.
+Os materiais de curso (`.pptx`, `.zip`, `Aula3_*` etc.) **não estão no Git** (ficam no `.gitignore`) — se precisar deles, copie à parte.
+
+> **Não copie `node_modules/` entre sistemas operacionais** (ex.: Windows → Linux): os binários em `node_modules/.bin/` perdem a permissão de execução e o `npm run lint` passa a usar um ESLint antigo do sistema, com erro de configuração. Sempre recrie com `npm ci`.
 
 ## 2. Pré-requisitos na máquina nova
 
@@ -24,8 +28,8 @@ Se **ainda não** estiver no GitHub, copie a pasta com o `.git` incluído (ele c
 | Python | 3.10.x | `python3 --version` |
 | Git | qualquer recente | `git --version` |
 | PostgreSQL | rodando em `localhost:5151`, banco `laboratorio`, usuário `postgres`, senha `5151` | ver seção 4 |
-| Docker | **só se a máquina permitir** (não era o caso na máquina Unisys original) | `docker --version` |
-| GitHub CLI (`gh`) | opcional, facilita o Passo 1 do roteiro de CI/CD | `gh --version` |
+| Docker + Compose | recomendado — sobe Postgres + Node + Python com um comando (ver seção 6). Seu usuário precisa estar no grupo `docker` | `docker --version`, `docker compose version` |
+| GitHub CLI (`gh`) | recomendado — usado para rulesets, board, PRs. Sem sudo: baixar o binário oficial de github.com/cli/cli/releases (conferindo o checksum) para `~/.local/bin` | `gh --version` |
 
 Não é obrigatório ter exatamente essas versões — o projeto não usa recursos exóticos — mas são as versões validadas nesta sessão.
 
@@ -35,11 +39,19 @@ Não é obrigatório ter exatamente essas versões — o projeto não usa recurs
 cd laboratorio-claude-code
 
 # Node.js — inclui eslint (devDependency) usado pelo lint da esteira
-npm install
+npm ci
 
 # Python — requirements-dev.txt já inclui requirements.txt (Flask, psycopg2-binary)
-# mais flake8, pytest, bandit, pip-audit
+# mais flake8, pytest, bandit, pip-audit. Prefira um venv:
+python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements-dev.txt
+```
+
+Se o Python do sistema não tiver `venv`/`pip` (comum no Ubuntu sem o pacote `python3-venv`) e você não puder instalar, rode as ferramentas Python num container descartável — é o que foi feito na máquina Linux em 2026-09-24:
+
+```bash
+docker run --rm -v "$PWD":/app:ro -w /app -e PYTHONDONTWRITEBYTECODE=1 python:3.10-slim sh -c \
+  "pip install -q -r requirements-dev.txt && flake8 src/ tests/ --config=.flake8 && pytest tests/ -q -p no:cacheprovider && bandit -r src/ -q"
 ```
 
 ## 4. Banco de dados
@@ -48,7 +60,7 @@ O projeto espera um PostgreSQL acessível em `localhost:5151`, banco `postgres`/
 
 Se a máquina nova não tiver Postgres instalado localmente:
 - **Instalar Postgres nativo** na porta 5151 (ajuste `postgresql.conf` ou use `-p 5151` ao iniciar), ou
-- **Se Docker for permitido nesta máquina**: use o `docker-compose.yml` já pronto neste projeto, que sobe um Postgres na porta certa:
+- **Com Docker** (recomendado): use o `docker-compose.yml`, que sobe um Postgres na porta certa (publicado só em `127.0.0.1`):
   ```bash
   docker compose up postgres -d
   ```
@@ -69,10 +81,21 @@ Se algum desses falhar de um jeito diferente do documentado em `docs/STATUS_LABO
 
 ## 6. Rodar a aplicação
 
+**Com Docker** (tudo de uma vez):
+
+```bash
+docker compose up --build -d       # postgres (5151), node (3000), fornecedores (3001)
+docker compose down                # derrubar
+```
+
+**Sem Docker** (Postgres local na 5151 já rodando):
+
 ```bash
 node src/server.js                 # terminal 1 — porta 3000
 python src/fornecedores_api.py     # terminal 2 — porta 3001
 ```
+
+Não rode as duas formas ao mesmo tempo — elas disputam as portas 3000, 3001 e 5151.
 
 URLs em `CLAUDE.md`.
 
@@ -80,9 +103,9 @@ URLs em `CLAUDE.md`.
 
 | Item | Por quê | Onde fazer |
 |---|---|---|
-| Remote do GitHub | Git não guarda "a que máquina isso pertence"; se você clonou via HTTPS talvez precise configurar autenticação (token/SSH) na máquina nova | `git remote -v` para conferir, `gh auth login` ou chave SSH nova se necessário |
-| Ambiente `production` (Environment do GitHub) | É configuração do repositório no GitHub, não do código — só precisa ser feito uma vez por repositório, não por máquina | `Settings → Environments` (ver `docs/ROTEIRO_CICD_CLAUDE_CODE.md`, Passo 7) |
-| Docker/containers | Só ativar se **esta** máquina permitir — releia a regra em `docs/ROTEIRO_CICD_CLAUDE_CODE.md`, Passo 7, antes de mudar qualquer gatilho de workflow | Local: `docker compose up --build`. CI: aba Actions → `docker-build.yml` → Run workflow |
+| Chave SSH | Cada máquina tem a sua. Gere com `ssh-keygen -t ed25519 -C "seu@email"` e cadastre o `.pub` em GitHub → Settings → SSH and GPG keys | Teste: `ssh -T git@github.com` (fingerprint oficial do GitHub: `SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU`) |
+| Login do `gh` | O token fica no keyring da máquina, não no repositório | `gh auth login -h github.com -p ssh --skip-ssh-key -w -s project,admin:repo_hook,workflow` |
+| Ruleset da `main`, Environment `production`, Dependabot, CodeQL, board Kanban | São configurações do **repositório no GitHub**, não da máquina — já estão feitas, não precisa repetir | Conferir em `Settings → Rules`, `Settings → Environments`, `Settings → Code security` |
 | Credenciais/segredos reais (se algum dia houver) | Nunca ficam no Git | `Settings → Secrets and variables → Actions`, por repositório |
 
 ## 8. Se este era um clone via OneDrive/pasta sincronizada

@@ -195,10 +195,10 @@ Para cada etapa, o mercado reconhece práticas e ferramentas específicas. A tab
                                  │ tudo verde
                                  ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
-│         GITHUB ACTIONS — CD (workflow_dispatch, manual, INATIVO)        │
-│         [docker-build] — Dockerfile + docker-compose               │
-│         ⚠ Não dispara automaticamente: máquinas Unisys não permitem    │
-│           Docker. Pronto para ser habilitado em outra máquina/ambiente. │
+│         GITHUB ACTIONS — docker-build.yml                                │
+│  push/PR (automático): [build-node|python] → [scan Trivy]               │
+│  workflow_dispatch (manual): + [publish GHCR] + [deploy production]     │
+│  ⚠ Deploy só com aprovação humana no Environment "production".          │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -213,7 +213,7 @@ Para cada etapa, o mercado reconhece práticas e ferramentas específicas. A tab
 | Test | Gerar testes unitários/integração junto com a função (skill `criar-funcao-com-teste`) |
 | Build/CI | Criar e manter os arquivos de workflow (`.github/workflows/*.yml`) |
 | Security | Hooks determinísticos (`PreToolUse`) bloqueiam padrões inseguros antes de o arquivo ser salvo |
-| Release/Deploy | Gerar Dockerfile, docker-compose, scripts de deploy — mesmo que fiquem inativos até o ambiente permitir |
+| Release/Deploy | Gerar e validar Dockerfile, docker-compose e workflow de deploy (build + scan Trivy automáticos; publish/deploy manuais com aprovação) |
 | Operate/Monitor | Analisar logs, sugerir alertas, revisar métricas |
 
 Isso é o que o restante da documentação implementa: `docs/ROTEIRO_CICD_CLAUDE_CODE.md` (passo a passo), mais os artefatos em `.claude/` (skill, agente, hook) e `.github/workflows/` (pipelines reais) descritos em `docs/PROMPT_INICIAL_PROJETO.md`.
