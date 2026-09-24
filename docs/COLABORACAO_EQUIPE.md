@@ -75,6 +75,17 @@ Configurado em `Settings → Branches` (ou `Settings → Rules → Rulesets`, a 
 | Exigir que a branch esteja atualizada com a `main` antes do merge | Garante que o PR foi testado *com* as mudanças mais recentes dos outros, não só com uma foto antiga |
 | Bloquear force-push e deleção da `main` | Ninguém reescreve o histórico compartilhado |
 
+**Como está configurado neste repositório** (ruleset **"Proteger main"**, `Settings → Rules → Rulesets`):
+
+- PR obrigatório, com **1 aprovação de code owner** e resolução de todas as conversas do PR.
+- **8 checks obrigatórios**: Lint (ESLint), Lint (Flake8), Testes unitários (Node), Testes unitários (Python), Testes de integração (Postgres), Scan de segurança e os 2 scans Trivy das imagens.
+- Force-push e deleção da `main` bloqueados.
+- "Branch atualizada antes do merge" **não** está exigido (evita rebases constantes num time pequeno) — por isso a boa prática da seção 2.4 é feita pelo próprio dev.
+- **Bypass do admin só via PR**: enquanto existe uma única conta (ScaTecnologia), o admin pode fazer o merge sem a aprovação (`gh pr merge --admin` ou a caixa "bypass" no GitHub). **Quando o 2º dev entrar, remova o bypass** para a revisão virar obrigatória de verdade.
+- Repositório **público** — em repositório privado de conta Free, rulesets e aprovações de Environment não são aplicados.
+
+Para praticar tudo isso sozinho, com dois "devs" na mesma máquina e cada um com seus containers, veja `docs/SIMULANDO_2_DEVS.md`.
+
 ### 3.2 CODEOWNERS — revisão obrigatória por dono da área
 
 O arquivo `CODEOWNERS` (raiz do projeto, criado neste laboratório) declara quem **precisa** revisar mudanças em cada parte do código:

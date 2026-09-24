@@ -8,11 +8,13 @@ Contexto completo do projeto construído durante as sessões de laboratório com
 
 **Nome:** LabSystem
 **Objetivo:** Aplicação Node.js full-stack com autenticação, CRUD de Usuários, CRUD de Clientes e CRUD de Fornecedores, interface web responsiva e documentação interativa via Swagger.
-**Runtime principal:** Node.js (CommonJS)
-**Serviço auxiliar:** Python 3 + Flask (CRUD de Fornecedores)
-**Banco de dados:** PostgreSQL — `localhost:5151` — banco `laboratorio`
+**Runtime principal:** Node.js 24 LTS (CommonJS)
+**Serviço auxiliar:** Python 3.13 + Flask (CRUD de Fornecedores)
+**Banco de dados:** PostgreSQL 16 — `localhost:5151` — banco `laboratorio`
 **Porta Node.js:** `3000`
 **Porta Python:** `3001`
+**Execução:** `docker compose up --build -d` (ou os dois processos manualmente)
+**Repositório:** https://github.com/ScaTecnologia/laboratorio-claude-code (público) — board: https://github.com/users/ScaTecnologia/projects/2
 
 ---
 
@@ -110,6 +112,49 @@ Contexto completo do projeto construído durante as sessões de laboratório com
 
 ---
 
+## Sessão 3 — DevOps, CI/CD, Docker e trabalho em equipe (2026-09-24)
+
+Feita numa máquina Linux nova, com Docker permitido (as máquinas Unisys anteriores não permitiam). Estado detalhado e pendências: `docs/STATUS_LABORATORIO.md`.
+
+### 17. Docker ativado
+- Código passou a ler host/porta de variáveis de ambiente (`DB_HOST`, `DB_PORT`, `FORNECEDORES_HOST`, `FORNECEDORES_PORT`, `FLASK_HOST`), com padrão `localhost` — dentro do container, `localhost` é o próprio container.
+- `docker-compose.yml` sobe Postgres + Node + Python; Postgres e API Python publicados só em `127.0.0.1`.
+- Imagens sem CVEs CRITICAL/HIGH corrigíveis: npm removido do runtime Node; pip/setuptools/wheel removidos do runtime Python.
+
+### 18. Esteira CI/CD no GitHub
+- Primeiro commit organizado (materiais de curso e logs de hooks no `.gitignore`), branch `main`, repositório `ScaTecnologia/laboratorio-claude-code` (público).
+- `ci.yml` (lint, testes, integração com Postgres, scan de segurança) e `docker-build.yml` (build + scan Trivy automáticos; publish/deploy só manuais, deploy com aprovação no Environment `production`).
+- `trivy-action` fixada pelo SHA do commit (a tag antiga deixou de existir).
+- Hook `pipeline-guardrail.js` reescrito: impede o Claude Code de deixar publish/deploy automáticos.
+
+### 19. Governança e segurança no GitHub
+- Ruleset **"Proteger main"**: PR obrigatório, 8 checks obrigatórios, aprovação de code owner (admin pode dispensar só a aprovação enquanto há um único dev).
+- `CODEOWNERS` corrigido (apontava para uma conta de terceiro) → `@ScaTecnologia`.
+- CodeQL, Dependabot (alertas, correções e `dependabot.yml`), secret scanning com push protection.
+- `permissions: contents: read` nos workflows (11 alertas do CodeQL resolvidos).
+
+### 20. Board Kanban e exercício de 2 devs
+- Board "LabSystem — Esteira" (Backlog / To Do / Em Progresso / Em Revisão / Concluído) com automações nativas ligadas.
+- Exercício de conflito executado no GitHub real: issues #16/#17, PRs #18/#19, conflito no `git rebase` resolvido combinando as duas mudanças — `listar()` de clientes agora tem **limite padrão de 100 e ordem por nome**.
+
+### 21. Atualização de dependências e runtimes
+- Triagem dos PRs do Dependabot: 14 mesclados, 3 fechados com justificativa (Node 25 sem LTS, ESLint 10 sem migração, Python 3.14 só no Dockerfile).
+- **Python 3.10 → 3.13** (o 3.10 perde suporte em 2026-10-31) e **Node 22 → 24 LTS**, no CI e nas imagens.
+- **ESLint 8 → 10**: `.eslintrc.json` → `eslint.config.js` (flat config, mesmas regras); 9 avisos antigos limpos — lint com 0 problemas.
+- `ioredis` removido (não era usado).
+
+### 22. Simulação de vários devs com containers
+- Portas do compose configuráveis (`APP_PORT`, `API_PY_PORT`, `PG_PORT`).
+- Pastas `~/devs/dev1` (localhost:3010) e `~/devs/dev2` (localhost:3020): clone, autor Git e `portas.env` próprios — cada dev com seus containers e seu banco. Guia: `docs/SIMULANDO_2_DEVS.md`.
+- Cards de prática: #27 (Dev 1, quantidade de clientes) e #29 (Dev 2, busca de fornecedores).
+
+### 23. Documentação
+- `ROTEIRO_CICD_CLAUDE_CODE.md` (Passo 7 reescrito), `SETUP_NOVA_MAQUINA.md`, `DEVOPS_GUIA.md`, `DOCS.md`, `ARCHITECTURE.md` e este arquivo atualizados.
+- Corrigido: sessões **não** ficam em memória — ficam na tabela `sessoes` do PostgreSQL, com validade de 7 dias.
+- `.docx` de `docs/` gerados a partir dos `.md` por `docs/atualizar_docx.sh` (pandoc via Docker).
+
+---
+
 ## Estrutura de arquivos
 
 ```
@@ -118,7 +163,7 @@ laboratorio-claude-code/
 │   ├── server.js               # HTTP server Node.js, roteamento, auth, proxy
 │   ├── usuarios.js             # CRUD usuários + hash de senha + migração
 │   ├── clientes.js             # CRUD clientes
-│   ├── sessoes.js              # Sessões em memória (Map)
+│   ├── sessoes.js              # Sessões na tabela sessoes (PostgreSQL, 7 dias)
 │   ├── db.js                   # Conexão PostgreSQL (dois pools)
 │   ├── fornecedores_api.py     # API Python Flask — CRUD Fornecedores (porta 3001)
 │   ├── soma.js                 # Utilitário de exemplo
@@ -257,20 +302,24 @@ CREATE TABLE fornecedores (
 
 | Campo | Valor |
 |-------|-------|
-| Email | `Alexaugusto2@gmail.com` (usuário id=1) |
+| Email | `Alexaugusto2@gmail.com` |
 | Senha | `admin123` |
 | Role  | `Admin` |
 
-> A senha deve ser alterada após o primeiro acesso.
+> Em um **banco novo** (ex.: compose recém-criado, Dev 1/Dev 2), o sistema cria sozinho `admin@labsystem.com` / `admin123`. A senha deve ser alterada após o primeiro acesso.
 
 ---
 
 ## Como executar
 
 ```bash
-# Instalar dependências
-npm install
-pip install -r requirements.txt
+# Com Docker (recomendado) — sobe Postgres + Node + Python
+docker compose up --build -d
+docker compose down
+
+# Sem Docker — instalar dependências
+npm ci
+pip install -r requirements-dev.txt
 
 # Terminal 1 — Servidor Node.js (porta 3000)
 node src/server.js
@@ -278,9 +327,11 @@ node src/server.js
 # Terminal 2 — API Python Fornecedores (porta 3001)
 python src/fornecedores_api.py
 
-# Testes
-node src/soma.test.js
-node src/usuarios.test.js   # requer banco ativo
+# Lint e testes (os mesmos do CI)
+npm run lint
+npm run test:unit
+npm run test:integration    # requer banco ativo
+pytest tests/ -v
 ```
 
 **URLs:**
@@ -299,7 +350,7 @@ node src/usuarios.test.js   # requer banco ativo
 | Decisão | Justificativa |
 |---------|---------------|
 | `crypto.scrypt` para senhas | Módulo nativo do Node.js — sem dependência extra; algoritmo recomendado para hashing de senhas |
-| Sessões em memória (`Map`) | Simplicidade; adequado para laboratório — em produção usar Redis ou BD |
+| Sessões na tabela `sessoes` (PostgreSQL) | Persistem entre reinícios e são compartilhadas por várias instâncias; validade de 7 dias |
 | Sem Express no Node.js | Projeto usa apenas `http` nativo para minimizar dependências |
 | Cookie `HttpOnly` | Impede acesso ao token por JavaScript, mitigando XSS |
 | Proteção de rota server-side | A API retorna 401/403 independentemente do frontend |
@@ -309,6 +360,11 @@ node src/usuarios.test.js   # requer banco ativo
 | Auth centralizada no Node.js | O Python não valida sessão — o Node.js age como gateway e só repassa requisições autenticadas |
 | Proxy via `req.pipe(proxyReq)` | Encaminha o body sem re-parsear — mantém o payload original intacto |
 | Landing page sem redirect | `index.html` tornou-se vitrine comercial — o redirect automático foi removido |
+| Host/porta por variável de ambiente | Mesmo código roda com e sem Docker; padrão `localhost` |
+| Build + scan automáticos, publish/deploy manuais | Toda mudança é validada; nada chega a produção sem decisão humana |
+| Corrigir a imagem em vez de afrouxar o scan | Ferramentas não usadas no runtime saem da imagem; `ignore-unfixed` só para CVEs sem correção |
+| Actions de terceiros fixadas por SHA | Tags podem ser reapontadas ou apagadas; o SHA não |
+| Runtimes só em versões LTS/suportadas | Node 24 LTS, Python 3.13; trocas de versão são decisão planejada (Dependabot ignora) |
 
 ---
 
@@ -316,13 +372,10 @@ node src/usuarios.test.js   # requer banco ativo
 
 | Item | Tipo | Prioridade |
 |------|------|------------|
-| Sessões persistentes (Redis ou tabela no BD) | Melhoria de infraestrutura | Média |
 | `usuarios.test.js` desatualizado para testes com senha/role | Dívida técnica | Baixa |
-| Paginação nas listagens (clientes, fornecedores) | Funcionalidade | Baixa |
-| Máscara de CNPJ no campo de fornecedores | UX | Baixa |
-| Validação de formato de CNPJ no backend Python | Segurança/validação | Média |
-| Refatorar `server.js` em `routes/` e `middlewares/` | Estrutura de código | Baixa |
-| Supervisord ou PM2 para gerenciar os dois processos | DevOps | Baixa |
+| Paginação no frontend de clientes (a API já limita a 100) | Funcionalidade | Baixa |
+| Servir o Flask com gunicorn na imagem Python | DevOps | Média (produção) |
+| Node 24 → 26 LTS (depois de 2026-10-28) | Manutenção | Baixa |
 | HTTPS para ambiente de produção | Segurança | Alta (produção) |
 
 ---
@@ -333,6 +386,8 @@ node src/usuarios.test.js   # requer banco ativo
 |-------|-----------|
 | `frontend-layout-system` | Padrão visual para páginas HTML/CSS/JS — cores, layout, componentes, acessibilidade, responsividade |
 | `context-recovery` | Recupera contexto do projeto ao iniciar nova sessão — lê documentos na ordem certa, verifica git status e arquivos reais |
+| `cicd-pipeline` | Padrão da esteira: jobs separados, publish/deploy só manuais, validar imagem localmente com compose + Trivy |
+| `criar-funcao-com-teste` | Nova função JavaScript acompanhada de teste |
 
 ---
 
@@ -343,19 +398,25 @@ node src/usuarios.test.js   # requer banco ativo
 | `CLAUDE.md` | Regras, comandos, URLs, credenciais e skills para o Claude Code |
 | `DOCS.md` | Descrição técnica completa de todos os 23 arquivos do projeto |
 | `docs/PROJECT_CONTEXT.md` | Este arquivo — histórico e contexto de todas as sessões |
-| `docs/ARCHITECTURE.md` | Diagramas, camadas, fluxos de auth, segurança, proxy e evolução futura |
+| `docs/ARCHITECTURE.md` | Diagramas, camadas, fluxos de auth, segurança, proxy, containers, esteira CI/CD |
+| `docs/STATUS_LABORATORIO.md` | Onde paramos, o que foi feito, próximos passos (ler primeiro) |
+| `docs/ROTEIRO_CICD_CLAUDE_CODE.md`, `DEVOPS_GUIA.md` | Como a esteira foi construída e a teoria de DevOps |
+| `docs/COLABORACAO_EQUIPE.md`, `EXERCICIO_MULTIPLOS_DEVS.md`, `BACKLOG_KANBAN.md`, `SIMULANDO_2_DEVS.md` | Trabalho em equipe: branches, conflitos, board, vários devs com containers |
+| `docs/SETUP_NOVA_MAQUINA.md` | Levar o laboratório para outra máquina |
 
 ---
 
 ## Dependências
 
 ### Node.js
-| Pacote | Versão    | Uso                               |
-|--------|-----------|-----------------------------------|
-| `pg`   | `^8.21.0` | Driver PostgreSQL (node-postgres) |
+| Pacote | Tipo | Uso |
+|--------|------|-----|
+| `pg` (`^8.23.0`) | runtime | Driver PostgreSQL (node-postgres) |
+| `eslint` 10, `@eslint/js`, `globals` | dev | Lint (flat config) |
 
 ### Python
-| Pacote            | Versão    | Uso                                        |
-|-------------------|-----------|--------------------------------------------|
-| `flask`           | `>=3.0.0` | Framework HTTP da API de Fornecedores      |
-| `psycopg2-binary` | `>=2.9.9` | Driver PostgreSQL para Python              |
+| Pacote | Arquivo | Uso |
+|--------|---------|-----|
+| `flask` (`>=3.1.3`) | requirements.txt | Framework HTTP da API de Fornecedores |
+| `psycopg2-binary` (`>=2.9.13`) | requirements.txt | Driver PostgreSQL para Python |
+| `flake8`, `pytest`, `bandit`, `pip-audit` | requirements-dev.txt | Lint, testes, SAST, auditoria de dependências |

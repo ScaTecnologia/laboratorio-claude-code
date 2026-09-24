@@ -3,6 +3,10 @@
 > Pré-requisito: leia `docs/COLABORACAO_EQUIPE.md` primeiro (o "porquê"). Este documento é o "como", com comandos reais — **todos os comandos abaixo foram executados de verdade** em uma cópia isolada deste repositório para validar este roteiro antes de documentá-lo, incluindo o conflito e sua resolução.
 >
 > Objetivo: sentir na pele o que acontece quando dois devs mexem na mesma função, sem perder o trabalho de nenhum dos dois.
+>
+> **Executado no GitHub real em 2026-09-24:** os números #201/#202 abaixo são ilustrativos. No repositório, a Ana foi a issue **#16** / PR **#18** e o Bruno a issue **#17** / PR **#19** — o conflito apareceu exatamente como descrito no Passo 4, foi resolvido como no Passo 6, os dois PRs passaram na esteira (8 checks) e o histórico da `main` preservou os commits de "Ana (dev A)" e "Bruno (dev B)". Resultado em `src/clientes.js`: `listar()` com limite padrão de 100 **e** ordem por nome.
+>
+> Para refazer com containers, cada dev na sua pasta e com o seu sistema no ar, veja `docs/SIMULANDO_2_DEVS.md`.
 
 ---
 

@@ -12,14 +12,18 @@ O backend de Fornecedores roda em **Python (Flask)** na porta 3001. O servidor N
 
 | Camada           | Tecnologia                          |
 |------------------|-------------------------------------|
-| Runtime principal | Node.js (CommonJS)                 |
+| Runtime principal | Node.js **24 LTS** (CommonJS)      |
 | Servidor HTTP    | `http` (módulo nativo do Node.js)   |
-| API Fornecedores | Python 3 + Flask                    |
-| Banco de dados   | PostgreSQL (porta 5151)             |
+| API Fornecedores | Python **3.13** + Flask 3.1         |
+| Banco de dados   | PostgreSQL 16 (porta 5151)          |
 | Driver DB Node   | `pg` (node-postgres)                |
 | Driver DB Python | `psycopg2-binary`                   |
+| Redis / MongoDB  | Adaptadores **em memória** (`src/redis.js`, `src/mongo.js`) — sem servidor externo |
 | Frontend         | HTML + CSS + JavaScript puro        |
 | API Docs         | Swagger UI (via CDN)                |
+| Containers       | Docker + Docker Compose (Postgres + Node + Python) |
+| CI/CD            | GitHub Actions (`ci.yml`, `docker-build.yml`), CodeQL, Dependabot |
+| Qualidade        | ESLint 10 (`eslint.config.js`), flake8, pytest, bandit, pip-audit, Trivy |
 
 ---
 
@@ -36,7 +40,7 @@ Navegador
                 ▼
         src/server.js  :3000          ← Roteamento, auth middleware, proxy
                 │
-                ├── src/sessoes.js   ← Sessões em memória (Map)
+                ├── src/sessoes.js   ← Sessões (tabela sessoes no PostgreSQL)
                 ├── src/usuarios.js  ← CRUD + hash de senha
                 ├── src/clientes.js  ← CRUD clientes
                 ├── src/db.js        ← Pool de conexões PostgreSQL
@@ -55,39 +59,43 @@ Navegador
 ```
 laboratorio-claude-code/
 ├── src/
-│   ├── server.js               ← Ponto de entrada Node.js
-│   ├── usuarios.js             ← CRUD usuários + autenticação
-│   ├── clientes.js             ← CRUD clientes
-│   ├── sessoes.js              ← Sessões em memória
-│   ├── db.js                   ← Conexão PostgreSQL
+│   ├── server.js               ← Ponto de entrada Node.js (roteia para routes/)
+│   ├── routes/                 ← Um handler por recurso: auth, usuarios, clientes,
+│   │                             fornecedores (proxy → Python), produtos, estoque,
+│   │                             carrinho, avaliacoes, eventos, relatorio
+│   ├── middlewares/auth.js     ← Sessão por cookie (getSessao, setCookie, parseCookies)
+│   ├── models/avaliacao.js     ← Validação/montagem de documentos de avaliação
+│   ├── usuarios.js             ← CRUD usuários + hash de senha
+│   ├── clientes.js             ← CRUD clientes (limite padrão 100, ordem por nome)
+│   ├── produtos.js, estoque.js, carrinho.js, avaliacoes.js, eventos.js
+│   ├── sessoes.js              ← Sessões persistidas no PostgreSQL
+│   ├── db.js                   ← Pool PostgreSQL (host/porta por variável de ambiente)
+│   ├── redis.js, mongo.js      ← Adaptadores em memória (interface de ioredis/mongodb)
 │   ├── fornecedores_api.py     ← API Python Flask (porta 3001)
-│   ├── soma.js                 ← Utilitário de exemplo
-│   ├── soma.test.js            ← Testes da função soma
-│   ├── usuarios.test.js        ← Testes do CRUD de usuários
+│   ├── soma.js, soma.test.js   ← Exemplo de função + teste
+│   ├── usuarios.test.js, teste_*.js ← Testes (unitários e de integração)
 │   ├── index.js                ← Arquivo de exploração inicial (não usado)
-│   └── public/
-│       ├── index.html          ← Landing page comercial
-│       ├── login.html          ← Tela de login
-│       ├── clientes.html       ← CRUD de clientes
-│       ├── fornecedores.html   ← CRUD de fornecedores
-│       ├── usuarios.html       ← CRUD de usuários (Admin)
-│       ├── swagger.html        ← Swagger UI (carregado via CDN)
-│       ├── swagger.json        ← Especificação OpenAPI 3.0
-│       ├── css/
-│       │   └── styles.css      ← Design system completo
-│       └── js/
-│           ├── auth.js         ← Helpers compartilhados de autenticação
-│           ├── login.js        ← Lógica do formulário de login
-│           ├── clientes.js     ← CRUD de clientes no frontend
-│           ├── fornecedores.js ← CRUD de fornecedores no frontend
-│           └── usuarios.js     ← CRUD de usuários no frontend
-├── docs/
-│   ├── PROJECT_CONTEXT.md      ← Histórico completo do que foi construído
-│   └── ARCHITECTURE.md        ← Diagramas, fluxos, decisões técnicas
+│   └── public/                 ← Páginas HTML, css/styles.css, js/<página>.js, swagger
+├── tests/                      ← Testes Python (pytest): test_fornecedores_api.py, conftest.py
+├── docs/                       ← Documentação (ver tabela no CLAUDE.md); .md é a fonte, .docx é gerado
+├── .github/
+│   ├── workflows/ci.yml        ← Esteira CI: lint, testes, segurança
+│   ├── workflows/docker-build.yml ← Build + scan das imagens; publish/deploy manuais
+│   ├── dependabot.yml          ← Atualização semanal de dependências
+│   ├── ISSUE_TEMPLATE/         ← Modelos de card: tarefa, bug
+│   └── pull_request_template.md
+├── .claude/                    ← Skills, agentes e hooks do Claude Code
+├── Dockerfile                  ← Imagem do Node
+├── Dockerfile.python           ← Imagem da API Python
+├── docker-compose.yml          ← Sobe Postgres + Node + Python
+├── eslint.config.js            ← Regras de lint JS
+├── .flake8                     ← Regras de lint Python
+├── CODEOWNERS                  ← Revisor obrigatório por área (@ScaTecnologia)
 ├── DOCS.md                     ← Este arquivo
 ├── CLAUDE.md                   ← Instruções do projeto para o Claude Code
 ├── package.json                ← Dependências Node.js
-└── requirements.txt            ← Dependências Python
+├── requirements.txt            ← Dependências Python (runtime)
+└── requirements-dev.txt        ← Dependências Python de desenvolvimento/CI
 ```
 
 ---
@@ -112,7 +120,7 @@ Ponto de entrada da aplicação Node.js. Cria o servidor HTTP na porta 3000 e ce
 | `lerBody(req)` | Lê e parseia o JSON do body da requisição |
 | `responder(res, status, dados)` | Serializa e envia resposta JSON |
 | `parseCookies(req)` | Extrai cookies do header `Cookie` |
-| `getSessao(req)` | Lê `sessao_id` do cookie e busca no Map de sessões |
+| `getSessao(req)` | Lê `sessao_id` do cookie e busca a sessão na tabela `sessoes` |
 | `setCookie(res, name, value, opts)` | Define header `Set-Cookie` com `HttpOnly` |
 | `servirArquivo(res, filePath)` | Serve arquivo estático com Content-Type correto |
 | `proxyParaPython(req, res)` | Encaminha a requisição (com body) para `localhost:3001` |
@@ -181,17 +189,16 @@ Módulo de negócio para o CRUD de clientes. Segue o mesmo padrão de `usuarios.
 ---
 
 ### `src/sessoes.js`
-Gerencia sessões de usuário em memória usando um `Map` JavaScript. Não persiste entre reinicializações do servidor.
+Gerencia sessões de usuário na tabela `sessoes` do PostgreSQL (`id`, `dados` em JSON, `criado_em`). As sessões **sobrevivem a reinicializações** do servidor e valem por **7 dias**.
 
 **Funções exportadas:**
 
 | Função | Descrição |
 |--------|-----------|
-| `criar(dados)` | Gera token aleatório de 64 bytes (hex), armazena `{ userId, role, nome }` no Map e retorna o token |
-| `buscar(id)` | Retorna os dados da sessão pelo token ou `null` |
-| `encerrar(id)` | Remove a sessão do Map |
-
-> Em produção, substituir por sessões em Redis ou tabela no PostgreSQL para persistência e escalabilidade horizontal.
+| `inicializar()` | Cria a tabela `sessoes` se não existir e apaga sessões com mais de 7 dias |
+| `criar(dados)` | Gera token aleatório (32 bytes → 64 caracteres hex), grava `{ userId, role, nome }` e retorna o token |
+| `buscar(id)` | Retorna os dados da sessão pelo token (se tiver menos de 7 dias) ou `null` |
+| `encerrar(id)` | Apaga a sessão (logout) |
 
 ---
 
@@ -203,13 +210,15 @@ Configura a conexão com o PostgreSQL via `pg`.
 
 **Configuração:**
 
-| Parâmetro | Valor         |
-|-----------|---------------|
-| Host      | `localhost`   |
-| Porta     | `5151`        |
-| Usuário   | `postgres`    |
-| Senha     | `5151`        |
-| Banco     | `laboratorio` |
+| Parâmetro | Valor         | Variável de ambiente |
+|-----------|---------------|----------------------|
+| Host      | `localhost`   | `DB_HOST` (no compose: `postgres`) |
+| Porta     | `5151`        | `DB_PORT` (no compose: `5432`) |
+| Usuário   | `postgres`    | — |
+| Senha     | `5151`        | — |
+| Banco     | `laboratorio` | — |
+
+Os padrões valem para rodar sem Docker; dentro do container, `localhost` seria o próprio container, por isso o compose define `DB_HOST=postgres` (nome do serviço).
 
 ---
 
@@ -231,7 +240,9 @@ API REST em **Python Flask** para o CRUD de Fornecedores. Roda na porta **3001**
 | PUT    | `/fornecedores/<id>`    | Atualiza campos fornecidos       |
 | DELETE | `/fornecedores/<id>`    | Remove fornecedor                |
 
-> A autenticação **não** é verificada pelo Python — essa responsabilidade fica no `server.js`, que valida a sessão antes de fazer o proxy.
+> A autenticação **não** é verificada pelo Python — essa responsabilidade fica no `server.js`, que valida a sessão antes de fazer o proxy. Por isso a porta 3001 é publicada só em `127.0.0.1`.
+
+**Variáveis de ambiente:** `DB_HOST` / `DB_PORT` (mesmas do `db.js`) e `FLASK_HOST` (padrão `127.0.0.1`; no container, `0.0.0.0`). O proxy do Node encontra a API por `FORNECEDORES_HOST` / `FORNECEDORES_PORT` (padrão `localhost:3001`; no compose, `fornecedores:3001`).
 
 ---
 
@@ -405,24 +416,27 @@ CREATE TABLE fornecedores (
 
 ## Como Executar
 
-### Pré-requisitos
-- Node.js instalado
-- Python 3.x instalado
-- PostgreSQL rodando em `localhost:5151`
+### Opção 1 — Docker (recomendado)
 
-### Instalação
+Pré-requisito: Docker + Docker Compose.
 
 ```bash
-# Dependências Node.js
-npm install
-
-# Dependências Python
-pip install -r requirements.txt
+docker compose up --build -d     # postgres (5151), node (3000), fornecedores (3001)
+docker compose ps                # os 3 serviços "Up"
+docker compose logs -f node      # logs do app
+docker compose down              # parar (dados ficam no volume)
 ```
 
-### Iniciar (dois terminais)
+Portas configuráveis (`APP_PORT`, `API_PY_PORT`, `PG_PORT`) para rodar várias cópias lado a lado — ver `docs/SIMULANDO_2_DEVS.md`.
+
+### Opção 2 — Sem Docker
+
+Pré-requisitos: Node.js 24, Python 3.13 e PostgreSQL rodando em `localhost:5151`.
 
 ```bash
+npm ci
+pip install -r requirements-dev.txt     # inclui requirements.txt
+
 # Terminal 1 — Servidor Node.js (porta 3000)
 node src/server.js
 
@@ -439,24 +453,53 @@ python src/fornecedores_api.py
 | `http://localhost:3000/clientes.html` | CRUD Clientes |
 | `http://localhost:3000/fornecedores.html` | CRUD Fornecedores |
 | `http://localhost:3000/usuarios.html` | CRUD Usuários (Admin) |
+| `http://localhost:3000/produtos.html`, `estoque.html`, `carrinho.html`, `avaliacoes.html`, `eventos.html`, `relatorio.html` | Demais telas |
 | `http://localhost:3000/api-docs` | Swagger UI |
 
-### Credenciais padrão
+### Credenciais
 
-| Campo | Valor |
-|-------|-------|
-| Email | `Alexaugusto2@gmail.com` |
-| Senha | `admin123` |
-| Role  | `Admin` |
+| Situação | Email | Senha |
+|----------|-------|-------|
+| Banco novo (criado automaticamente quando não há usuários) | `admin@labsystem.com` | `admin123` |
+| Credencial de desenvolvimento do `CLAUDE.md` (criada no banco do compose principal) | `Alexaugusto2@gmail.com` | `admin123` |
 
 ---
 
 ## Testes
 
 ```bash
-node src/soma.test.js         # testes da função soma (sem banco)
-node src/usuarios.test.js     # testes do CRUD de usuários (requer banco ativo)
+npm run lint                  # ESLint 10 — esperado: 0 problemas
+npm run test:unit             # soma + mongo em memória (sem banco)
+npm run test:integration      # usuários + redis (requer PostgreSQL ativo)
+node src/teste_avaliacoes.js  # avaliações (adaptador Mongo em memória)
+flake8 src/ tests/ --config=.flake8
+pytest tests/ -v              # validação de CNPJ da API Python
+bandit -r src/ -q             # SAST Python
 ```
+
+Os mesmos comandos rodam no GitHub Actions (`.github/workflows/ci.yml`) em todo push e PR.
+
+---
+
+## Infraestrutura, CI/CD e qualidade
+
+| Arquivo | O que faz |
+|---------|-----------|
+| `Dockerfile` | Imagem Node 24 (multi-stage, usuário não-root, **sem npm no runtime**) |
+| `Dockerfile.python` | Imagem Python 3.13 (usuário não-root, **sem pip/setuptools/wheel no runtime**) |
+| `docker-compose.yml` | Postgres + Node + Python; variáveis de host/porta; Postgres e API Python só em `127.0.0.1` |
+| `.dockerignore` | Mantém fora da imagem docs, testes, `.env`, `node_modules` etc. |
+| `.github/workflows/ci.yml` | Jobs separados: Lint (ESLint), Lint (Flake8), Testes unitários (Node/Python), Testes de integração (Postgres via `services:`), Scan de segurança (npm audit, pip-audit, bandit). `permissions: contents: read` |
+| `.github/workflows/docker-build.yml` | Build + scan Trivy (automático em push/PR na `main`); publish no GHCR e deploy em produção só por disparo manual, deploy com aprovação no Environment `production` |
+| `.github/dependabot.yml` | npm, pip, actions e docker, semanal; ignora trocas major de Node e minor/major de Python (decisão planejada) |
+| `eslint.config.js` | Regras de lint JS (flat config) |
+| `.flake8` | Regras de lint Python |
+| `CODEOWNERS` | `@ScaTecnologia` revisa todas as áreas |
+| `.github/ISSUE_TEMPLATE/`, `pull_request_template.md` | Modelos de card (tarefa/bug) e de PR |
+| `docs/atualizar_docx.sh` | Regenera os `.docx` de `docs/` a partir dos `.md` (pandoc via Docker) |
+| `.claude/hooks/` | `security-guardrail.js` (bloqueia `.env` e SQL interpolado) e `pipeline-guardrail.js` (impede publish/deploy automático) |
+
+No GitHub (`ScaTecnologia/laboratorio-claude-code`, público): ruleset **"Proteger main"** (PR + 8 checks obrigatórios + aprovação de code owner), CodeQL, Dependabot, secret scanning, Environment `production` e o board Kanban em https://github.com/users/ScaTecnologia/projects/2.
 
 ---
 
@@ -464,13 +507,15 @@ node src/usuarios.test.js     # testes do CRUD de usuários (requer banco ativo)
 
 ### Node.js (`package.json`)
 
-| Pacote | Versão    | Uso |
-|--------|-----------|-----|
-| `pg`   | `^8.21.0` | Driver PostgreSQL |
+| Pacote | Tipo | Uso |
+|--------|------|-----|
+| `pg` | runtime | Driver PostgreSQL |
+| `eslint`, `@eslint/js`, `globals` | dev | Lint (ESLint 10, flat config) |
 
-### Python (`requirements.txt`)
+### Python (`requirements.txt` / `requirements-dev.txt`)
 
-| Pacote            | Versão   | Uso |
-|-------------------|----------|-----|
-| `flask`           | `>=3.0.0` | Framework HTTP da API de Fornecedores |
-| `psycopg2-binary` | `>=2.9.9` | Driver PostgreSQL para Python |
+| Pacote | Arquivo | Uso |
+|--------|---------|-----|
+| `flask` (≥3.1.3) | requirements | Framework HTTP da API de Fornecedores |
+| `psycopg2-binary` (≥2.9.13) | requirements | Driver PostgreSQL para Python |
+| `flake8`, `pytest`, `bandit`, `pip-audit` | requirements-dev | Lint, testes, SAST e auditoria de dependências |
