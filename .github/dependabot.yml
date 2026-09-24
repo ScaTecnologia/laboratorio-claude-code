@@ -1,0 +1,31 @@
+# ============================================================================
+# Dependabot — abre PRs automáticos atualizando dependências (Passo 6 do
+# docs/ROTEIRO_CICD_CLAUDE_CODE.md). Cada PR passa pela esteira (ci.yml e
+# docker-build.yml) como qualquer outro, então nada entra sem CI verde.
+# Semanal e com limite de PRs abertos para não inundar o board.
+# ============================================================================
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

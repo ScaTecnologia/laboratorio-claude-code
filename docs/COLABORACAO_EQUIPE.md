@@ -81,13 +81,13 @@ O arquivo `CODEOWNERS` (raiz do projeto, criado neste laboratório) declara quem
 
 ```
 # Qualquer alteração em rotas/autenticação precisa do dono de segurança
-/src/middlewares/  @alexandersilva
-/src/routes/auth.js @alexandersilva
+/src/middlewares/  @ScaTecnologia
+/src/routes/auth.js @ScaTecnologia
 
 # Pipeline e infraestrutura
-/.github/  @alexandersilva
-/Dockerfile* @alexandersilva
-/docker-compose.yml @alexandersilva
+/.github/  @ScaTecnologia
+/Dockerfile* @ScaTecnologia
+/docker-compose.yml @ScaTecnologia
 ```
 
 Isso evita que uma mudança arriscada (ex.: autenticação) seja aprovada por alguém sem contexto suficiente — o GitHub **exige** a revisão da pessoa/time listado antes de permitir o merge.

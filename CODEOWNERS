@@ -7,23 +7,23 @@
 # O padrão mais específico que casar é o que vale (como .gitignore).
 
 # Dono padrão do repositório — usado quando nenhuma regra mais específica casa.
-*                                @alexandersilva
+*                                @ScaTecnologia
 
 # Autenticação e controle de acesso — área sensível, revisão obrigatória.
-/src/middlewares/                @alexandersilva
-/src/routes/auth.js              @alexandersilva
-/src/usuarios.js                 @alexandersilva
-/src/sessoes.js                  @alexandersilva
+/src/middlewares/                @ScaTecnologia
+/src/routes/auth.js              @ScaTecnologia
+/src/usuarios.js                 @ScaTecnologia
+/src/sessoes.js                  @ScaTecnologia
 
 # Esteira de CI/CD e infraestrutura — mudanças aqui afetam todo o time.
-/.github/                        @alexandersilva
-/Dockerfile                      @alexandersilva
-/Dockerfile.python               @alexandersilva
-/docker-compose.yml              @alexandersilva
-/.claude/hooks/                  @alexandersilva
-/.claude/settings.json           @alexandersilva
+/.github/                        @ScaTecnologia
+/Dockerfile                      @ScaTecnologia
+/Dockerfile.python               @ScaTecnologia
+/docker-compose.yml              @ScaTecnologia
+/.claude/hooks/                  @ScaTecnologia
+/.claude/settings.json           @ScaTecnologia
 
 # Documentação de processo — mudar as regras do jogo também precisa de revisão.
-/CLAUDE.md                       @alexandersilva
-/docs/COLABORACAO_EQUIPE.md      @alexandersilva
-/docs/DEVOPS_GUIA.md             @alexandersilva
+/CLAUDE.md                       @ScaTecnologia
+/docs/COLABORACAO_EQUIPE.md      @ScaTecnologia
+/docs/DEVOPS_GUIA.md             @ScaTecnologia
