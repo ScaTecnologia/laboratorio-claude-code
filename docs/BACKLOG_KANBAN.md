@@ -65,3 +65,18 @@ Se duas pessoas quiserem a mesma tarefa: quem comentar/se atribuir primeiro leva
 ## 5. Backlog pequeno o suficiente para caber em uma esteira rápida
 
 Uma tarefa bem escrita no template (`tarefa.yml`) deve ser fatiável o bastante para virar **uma branch curta** (ver `docs/COLABORACAO_EQUIPE.md`, seção 2.3) — normalmente algo entre "algumas horas" e "um dia" de trabalho. Tarefas maiores devem ser quebradas em sub-issues antes de entrar em **To Do**.
+
+## 6. O board deste repositório (como está configurado)
+
+- **Board:** https://github.com/users/ScaTecnologia/projects/2 — "LabSystem — Esteira", vinculado ao repositório.
+- **Colunas (campo Status):** Backlog · To Do · Em Progresso · Em Revisão · Concluído.
+- **Automações nativas ligadas** (projeto → ⋯ → Workflows): *Item added to project* (entra em **To Do**), *Pull request linked to issue* (→ **Em Revisão**), *Pull request merged* e *Item closed* (→ **Concluído**), *Auto-close issue*, *Auto-add sub-issues*.
+- **Criar um card:** https://github.com/ScaTecnologia/laboratorio-claude-code/issues/new/choose → modelo **Tarefa** (aplica o rótulo `tarefa`) ou **Bug**. Se o card não aparecer no board, adicione pela lateral da issue (*Projects*).
+- **Pegar o card e criar a branch sem sair do GitHub:** na issue, *Assignees* → você; depois *Development → Create a branch*. O GitHub sugere o nome (ex.: `27-mostrar-a-quantidade...`), já liga a branch à issue e mostra o comando:
+  ```bash
+  git fetch origin
+  git checkout <nome-da-branch>
+  ```
+- **Fechar o ciclo:** PR com `Resolve #<número>` na descrição → card vai para **Em Revisão**; merge → issue fecha e card vai para **Concluído**.
+
+Pelo terminal, o `gh` faz o mesmo (útil para automatizar): `gh issue create`, `gh issue edit <n> --add-assignee @me`, `gh issue develop <n> --checkout`, `gh pr create`.

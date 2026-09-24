@@ -3,8 +3,9 @@
 > **Nova sessão do Claude Code, ou retomando depois de um tempo?** Leia `docs/STATUS_LABORATORIO.md` antes de propor qualquer implementação — ele diz o que já foi feito, o que falta e os próximos passos concretos. A skill `context-recovery` já lê esse arquivo primeiro.
 
 ## Stack
-- Node.js (CommonJS) — sem frameworks, apenas módulos nativos
-- Python 3 + Flask — backend do CRUD de Fornecedores (porta 3001)
+- Node.js 24 LTS (CommonJS) — sem frameworks, apenas módulos nativos
+- Python 3.13 + Flask — backend do CRUD de Fornecedores (porta 3001)
+- Docker Compose — Postgres + Node + Python (`docker compose up --build -d`)
 - JavaScript puro no frontend (HTML + CSS + Fetch API)
 - PostgreSQL — `localhost:5151` — banco `laboratorio`
 - Driver Node: `pg` (node-postgres)

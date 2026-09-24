@@ -43,7 +43,7 @@ O LabSystem é uma aplicação com **dois servidores backend**: um servidor Node
 │           │                      │          │               │
 │  ┌────────▼───────┐  ┌───────────▼──────┐   │              │
 │  │ src/sessoes.js │  │ src/usuarios.js  │   │              │
-│  │ Map em memória │  │ src/clientes.js  │   │              │
+│  │ tabela sessoes │  │ src/clientes.js  │   │              │
 │  └────────────────┘  └───────────┬──────┘   │              │
 │                                  │          │               │
 │                         ┌────────▼──────┐   │              │
@@ -139,7 +139,7 @@ Requisição HTTP
 | `lerBody(req)` | Lê e parseia o JSON do body da requisição |
 | `responder(res, status, dados)` | Serializa e envia resposta JSON |
 | `parseCookies(req)` | Extrai cookies do header `Cookie` |
-| `getSessao(req)` | Lê `sessao_id` do cookie e busca no Map de sessões |
+| `getSessao(req)` | Lê `sessao_id` do cookie e busca a sessão na tabela `sessoes` |
 | `setCookie(res, name, value, opts)` | Define header `Set-Cookie` com `HttpOnly` |
 | `servirArquivo(res, filePath)` | Serve arquivo estático com Content-Type correto |
 | `proxyParaPython(req, res)` | Faz pipe da requisição (com body) para `localhost:3001` e retorna a resposta |
@@ -157,6 +157,8 @@ Requisição HTTP
 - Retornar JSON em todas as respostas
 
 > Este serviço **não deve ser acessado diretamente** em produção — todas as requisições devem passar pelo Node.js.
+
+Escuta em `FLASK_HOST` (padrão `127.0.0.1`; no container `0.0.0.0`, para a porta publicada funcionar) e se conecta ao banco por `DB_HOST`/`DB_PORT`. O Node o encontra por `FORNECEDORES_HOST`/`FORNECEDORES_PORT` (padrão `localhost:3001`; no compose `fornecedores:3001`).
 
 ---
 
@@ -194,9 +196,10 @@ deletar(id)
 #### `src/sessoes.js`
 
 ```
-criar(dados)   → gera token de 64 bytes (hex), armazena em Map, retorna token
-buscar(id)     → retorna dados da sessão ou null
-encerrar(id)   → remove do Map
+inicializar()  → cria a tabela sessoes; apaga sessões com mais de 7 dias
+criar(dados)   → gera token (64 caracteres hex), grava na tabela, retorna token
+buscar(id)     → retorna dados da sessão (se < 7 dias) ou null
+encerrar(id)   → apaga a sessão (logout)
 ```
 
 #### `src/db.js`
@@ -204,6 +207,7 @@ encerrar(id)   → remove do Map
 ```
 garantirBanco()  → conecta em "postgres", cria "laboratorio" se não existir
 pool             → Pool de conexões para o banco "laboratorio"
+host/porta       → DB_HOST / DB_PORT (padrão localhost:5151; no compose postgres:5432)
 ```
 
 ---
@@ -358,7 +362,13 @@ fetch('/fornecedores', { credentials: 'include' })
 | Injeção de SQL (Node) | Queries parametrizadas (`$1`, `$2`) em todas as operações |
 | Injeção de SQL (Python) | Queries parametrizadas (`%s`) via psycopg2 |
 | XSS via tabela | `escHtml()` aplicado em todos os valores renderizados no DOM |
-| Acesso direto ao Python | Python na porta 3001 deve ser acessado apenas localmente — não exposto publicamente |
+| Acesso direto ao Python | Flask escuta em `127.0.0.1` por padrão; no compose, a porta 3001 (e a 5151 do Postgres) é publicada só em `127.0.0.1` |
+| Containers | Usuário não-root; ferramentas de empacotamento (npm, pip, setuptools, wheel) removidas das imagens finais; scan Trivy (CRITICAL/HIGH) bloqueia o PR |
+| Dependências vulneráveis | `npm audit` e `pip-audit` no CI; Dependabot (alertas + PRs de correção) |
+| Código inseguro | bandit (Python) no CI; CodeQL (JS, Python e workflows) em todo PR |
+| Segredos no repositório | Secret scanning + push protection no GitHub; hook `security-guardrail.js` impede o Claude Code de alterar `.env` |
+| Token do CI com poder demais | `permissions: contents: read` nos workflows (menor privilégio) |
+| Código sem revisão na `main` | Ruleset: PR obrigatório, 8 checks verdes e aprovação de code owner |
 
 ---
 
@@ -398,14 +408,52 @@ As tabelas não têm relacionamento entre si. Expansões futuras (ex: fornecedor
 
 ## Sessões
 
-As sessões são armazenadas em um `Map` JavaScript no processo Node.js.
+As sessões são armazenadas na tabela `sessoes` do PostgreSQL (`src/sessoes.js`): token aleatório de 64 caracteres hex no cookie `sessao_id`, dados `{ userId, role, nome }` em JSON, validade de **7 dias** (sessões antigas são apagadas na inicialização).
 
 **Implicações:**
-- Simples e sem dependência externa.
-- **Não persistem** entre reinicializações do servidor — todos os usuários precisam logar novamente.
-- **Não escalam** horizontalmente — múltiplas instâncias não compartilham sessões.
+- **Persistem** entre reinicializações e rebuilds do container — o login continua valendo.
+- **Escalam** horizontalmente: várias instâncias do Node compartilhando o mesmo banco enxergam as mesmas sessões.
+- Cada cópia do sistema com banco próprio (ex.: Dev 1 e Dev 2 em `docs/SIMULANDO_2_DEVS.md`) tem suas próprias sessões.
 
-Para produção, substituir por sessões em **Redis** ou tabela de sessões no PostgreSQL.
+---
+
+## Execução em containers
+
+```
+docker compose up --build -d
+┌──────────────────────── rede interna do compose ────────────────────────┐
+│                                                                         │
+│  node  (Dockerfile, Node 24)            fornecedores (Dockerfile.python)│
+│  DB_HOST=postgres  ────────────┐        DB_HOST=postgres  ──────┐       │
+│  FORNECEDORES_HOST=fornecedores ──────▶ FLASK_HOST=0.0.0.0      │       │
+│         │                      │                                │       │
+│         │                      ▼                                ▼       │
+│         │                 postgres (postgres:16-alpine, volume persistente)
+└─────────┼───────────────────────────────────────────────────────────────┘
+          │ publicado no computador:
+          ├── ${APP_PORT:-3000}          → navegador (única porta aberta na rede)
+          ├── 127.0.0.1:${API_PY_PORT:-3001} → só depuração local
+          └── 127.0.0.1:${PG_PORT:-5151}     → só ferramentas locais
+```
+
+- Dentro da rede do compose os serviços se acham **pelo nome** (`postgres`, `fornecedores`); por isso o código lê host/porta de variáveis de ambiente, com padrão `localhost` para rodar sem Docker.
+- `COMPOSE_PROJECT_NAME` + portas diferentes permitem várias cópias isoladas (containers e bancos próprios) na mesma máquina — `docs/SIMULANDO_2_DEVS.md`.
+- Redis e MongoDB não têm container: são adaptadores em memória dentro do processo Node.
+
+## Esteira CI/CD
+
+```
+push / PR ─▶ ci.yml:  Lint (ESLint) ─▶ Testes unitários (Node) ─▶ Testes de integração (Postgres)
+                      Lint (Flake8) ─▶ Testes unitários (Python)
+                      Scan de segurança (npm audit, pip-audit, bandit)
+          ─▶ docker-build.yml: Build imagens ─▶ Scan Trivy
+          ─▶ CodeQL
+                 │ 8 checks obrigatórios verdes + aprovação do code owner
+                 ▼
+               merge na main ─▶ (manual) publish GHCR ─▶ (manual + aprovação) deploy production
+```
+
+Detalhes e decisões: `docs/ROTEIRO_CICD_CLAUDE_CODE.md`. Fluxo de equipe: `docs/COLABORACAO_EQUIPE.md`.
 
 ---
 
@@ -440,12 +488,10 @@ O projeto possui skills registradas em `.claude/skills/` que governam como o Cla
 
 | Item | Impacto | Solução sugerida |
 |------|---------|------------------|
-| Sessões em memória | Perdidas ao reiniciar; não escalam | Redis ou tabela `sessoes` no PostgreSQL |
 | Pool Python sem reuso | Uma conexão por request | `ThreadedConnectionPool` do psycopg2 |
-| CNPJ sem validação de formato | Aceita qualquer string | Validação no Python + máscara no frontend |
 | `usuarios.test.js` desatualizado | Testes não cobrem senha/role | Reescrever para a versão atual |
-| Sem paginação | Listagens crescem indefinidamente | Parâmetros `?limit` e `?offset` nas rotas |
-| Python porta 3001 exposta | Acesso sem auth possível em ambiente compartilhado | Bind em `127.0.0.1` ou firewall |
+| Flask com servidor de desenvolvimento | Não indicado para produção real | Servir com gunicorn na imagem Python |
+| `clientes.html` não pagina | Mostra no máximo 100 clientes (limite padrão de `listar()`) | Paginação no frontend usando `?limit`/`?offset` |
 
 ---
 
