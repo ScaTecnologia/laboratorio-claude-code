@@ -14,7 +14,7 @@ Um projeto Node.js + Python (LabSystem — CRUD de clientes/fornecedores/usuári
 2. **DevOps e esteira de CI/CD** — o que é, boas práticas, e uma esteira real implementada com GitHub Actions.
 3. **Trabalho em equipe na esteira** — como vários desenvolvedores usam o mesmo repositório sem destruir o trabalho uns dos outros, e o que é/como se resolve um conflito de merge.
 
-As partes 2 e 3 são o trabalho mais recente (documentado abaixo) e ainda **não foram levadas para um repositório remoto real** — tudo existe localmente até agora.
+As partes 2 e 3 são o trabalho mais recente (documentado abaixo). Desde 2026-09-24 o projeto está no GitHub: `ScaTecnologia/laboratorio-claude-code` (privado).
 
 ---
 
@@ -69,8 +69,8 @@ Isto é o que falta para "levar o laboratório para valer" (itens riscados já f
 
 1. ~~Resolver o arquivo `.git/index.lock`~~ — removido em 2026-09-24.
 2. ~~Decidir o que entra no primeiro commit~~ — feito em 2026-09-24 (commit `feat: esteira CI/CD, colaboração em equipe e Docker ativo`). Materiais de curso, logs dos hooks e o PDF de conferência ficaram no `.gitignore` (continuam na pasta local).
-3. ~~Renomear a branch para `main`~~ (feito) e **criar o repositório remoto no GitHub** — `docs/ROTEIRO_CICD_CLAUDE_CODE.md`, Passo 1, tem os comandos exatos.
-4. **Configurar no GitHub** (depois do primeiro push):
+3. ~~Renomear a branch para `main` e criar o repositório remoto~~ — feito em 2026-09-24: `git@github.com:ScaTecnologia/laboratorio-claude-code.git` (**privado**, conta pessoal Free). Push por SSH (chave `~/.ssh/id_ed25519`, autentica como ScaTecnologia).
+4. **Configurar no GitHub** — ATENÇÃO: em repositório **privado** de conta **Free**, branch protection/rulesets não são aplicados (logo o CODEOWNERS não é exigido) e o Environment `production` não tem "Required reviewers". Para essas travas: tornar público, migrar para uma organização Team, ou GitHub Pro. Itens:
    - Branch protection / rulesets na `main` (Passo 2 do roteiro).
    - "Require review from Code Owners" (ativa o `CODEOWNERS` já criado).
    - Dependabot + CodeQL (Passo 6 do roteiro).
