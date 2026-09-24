@@ -38,7 +38,7 @@ As partes 2 e 3 são o trabalho mais recente (documentado abaixo). Desde 2026-09
 | Esteira CI (ativa) | `.github/workflows/ci.yml` — lint, testes unitários/integração (Postgres real via `services:`), scan de segurança |
 | Esteira Docker | `.github/workflows/docker-build.yml` — build + scan Trivy **automáticos** em push/PR na `main`; publish (GHCR) e deploy em produção **só manuais** (`workflow_dispatch`, deploy exige aprovação humana no Environment `production`) |
 | Containers (**ativos e validados**) | `Dockerfile`, `Dockerfile.python`, `docker-compose.yml`, `.dockerignore` — `docker compose up --build -d` |
-| Qualidade de código | `.eslintrc.json`, `.flake8`, `requirements-dev.txt`, `tests/test_fornecedores_api.py`, `tests/conftest.py` |
+| Qualidade de código | `eslint.config.js`, `.flake8`, `requirements-dev.txt`, `tests/test_fornecedores_api.py`, `tests/conftest.py` |
 | Colaboração em equipe | `CODEOWNERS`, `.github/pull_request_template.md`, `.github/ISSUE_TEMPLATE/tarefa.yml`, `.github/ISSUE_TEMPLATE/bug.yml`, `.github/ISSUE_TEMPLATE/config.yml` |
 | Claude Code | Skill `.claude/skills/cicd-pipeline/`, agente `.claude/agents/devops-engineer.md`, hook `.claude/hooks/pipeline-guardrail.js` (registrado em `.claude/settings.json`) |
 | Visual | Artifact publicado (fora do repositório) com o fluxo completo backlog→produção — link só existe na conversa onde foi gerado; se precisar de novo, peça para recriar |

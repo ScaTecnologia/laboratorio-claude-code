@@ -64,7 +64,7 @@ Antes do pipeline, é preciso ter lint e testes executáveis por linha de comand
 
 | Arquivo adicionado | Função |
 |---|---|
-| `.eslintrc.json` | Regras de lint para o JavaScript (`src/**/*.js`) |
+| `eslint.config.js` | Regras de lint para o JavaScript (`src/**/*.js`), formato flat config do ESLint 9+ (antes era `.eslintrc.json`) |
 | `.flake8` | Regras de lint para o Python (`src/fornecedores_api.py`) |
 | `requirements-dev.txt` | Dependências de desenvolvimento Python (flake8, pytest, bandit) |
 | `package.json` (atualizado) | `devDependencies` (eslint) e scripts `lint`, `test:unit`, `test:integration` |

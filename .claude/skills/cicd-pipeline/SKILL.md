@@ -8,7 +8,7 @@ description: Use esta skill ao criar ou alterar qualquer arquivo de pipeline (.g
 Aplica-se sempre que a tarefa envolver:
 - Criar ou editar workflows em `.github/workflows/`
 - Criar ou editar `Dockerfile`, `Dockerfile.python` ou `docker-compose.yml`
-- Adicionar/alterar lint (`.eslintrc.json`, `.flake8`) ou scripts de teste usados pela esteira
+- Adicionar/alterar lint (`eslint.config.js`, `.flake8`) ou scripts de teste usados pela esteira
 - Configurar segurança de pipeline (secrets, scans, Dependabot, CodeQL)
 
 Referência conceitual completa: `docs/DEVOPS_GUIA.md` e `docs/ROTEIRO_CICD_CLAUDE_CODE.md`.
