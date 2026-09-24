@@ -4,7 +4,7 @@
 # Uso normal: `docker compose up --build`.
 # Isolado:    docker build -f Dockerfile.python -t labsystem-fornecedores .
 # ============================================================================
-FROM python:3.10-slim
+FROM python:3.14-slim
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1
 RUN addgroup --system app && adduser --system --ingroup app app
