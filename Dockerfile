@@ -4,12 +4,12 @@
 # Uso normal: `docker compose up --build` (sobe Postgres + Node + Python).
 # Isolado:    docker build -t labsystem-node .
 # ============================================================================
-FROM node:22-alpine AS deps
+FROM node:25-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-FROM node:22-alpine
+FROM node:25-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 # Usuário não-root — boa prática de segurança de contêiner.
