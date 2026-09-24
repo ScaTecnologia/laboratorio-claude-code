@@ -14,7 +14,7 @@ Um projeto Node.js + Python (LabSystem — CRUD de clientes/fornecedores/usuári
 2. **DevOps e esteira de CI/CD** — o que é, boas práticas, e uma esteira real implementada com GitHub Actions.
 3. **Trabalho em equipe na esteira** — como vários desenvolvedores usam o mesmo repositório sem destruir o trabalho uns dos outros, e o que é/como se resolve um conflito de merge.
 
-As partes 2 e 3 são o trabalho mais recente (documentado abaixo). Desde 2026-09-24 o projeto está no GitHub: `ScaTecnologia/laboratorio-claude-code` (privado).
+As partes 2 e 3 são o trabalho mais recente (documentado abaixo). Desde 2026-09-24 o projeto está no GitHub: `ScaTecnologia/laboratorio-claude-code` (**público**).
 
 ---
 
@@ -70,14 +70,16 @@ Isto é o que falta para "levar o laboratório para valer" (itens riscados já f
 1. ~~Resolver o arquivo `.git/index.lock`~~ — removido em 2026-09-24.
 2. ~~Decidir o que entra no primeiro commit~~ — feito em 2026-09-24 (commit `feat: esteira CI/CD, colaboração em equipe e Docker ativo`). Materiais de curso, logs dos hooks e o PDF de conferência ficaram no `.gitignore` (continuam na pasta local).
 3. ~~Renomear a branch para `main` e criar o repositório remoto~~ — feito em 2026-09-24: `git@github.com:ScaTecnologia/laboratorio-claude-code.git` (**privado**, conta pessoal Free). Push por SSH (chave `~/.ssh/id_ed25519`, autentica como ScaTecnologia).
-4. **Configurar no GitHub** — ATENÇÃO: em repositório **privado** de conta **Free**, branch protection/rulesets não são aplicados (logo o CODEOWNERS não é exigido) e o Environment `production` não tem "Required reviewers". Para essas travas: tornar público, migrar para uma organização Team, ou GitHub Pro. Itens:
-   - Branch protection / rulesets na `main` (Passo 2 do roteiro).
-   - "Require review from Code Owners" (ativa o `CODEOWNERS` já criado).
-   - Dependabot + CodeQL (Passo 6 do roteiro).
-   - Environment `production` com "Required reviewers" (necessário para o job `deploy-production` do `docker-build.yml` funcionar).
-5. **Criar o board Kanban** (GitHub Projects) seguindo `docs/BACKLOG_KANBAN.md`.
-6. **Rodar o exercício de múltiplos devs de verdade** (`docs/EXERCICIO_MULTIPLOS_DEVS.md`, seção "Como reproduzir") — o que foi feito nesta sessão foi uma simulação de validação; fazer você mesmo é o objetivo de aprendizado.
-7. ~~Testar `docker compose up --build`~~ — feito em 2026-09-24. Falta ver o `docker-build.yml` rodar no GitHub (depende do item 3).
+4. ~~Configurar no GitHub~~ — feito em 2026-09-24 (repositório agora **público**, então tudo é aplicado no plano Free), via `gh` CLI (`~/.local/bin/gh`, logado como ScaTecnologia):
+   - Ruleset **"Proteger main"**: PR obrigatório (sem push direto), 1 aprovação de code owner, 8 checks obrigatórios (6 jobs do `ci.yml` + 2 scans Trivy), sem force-push/deleção. **Admin pode furar só a aprovação via PR** (`gh pr merge --admin`) enquanto só existe uma conta — ao entrar o 2º dev, remova o bypass em Settings → Rules.
+   - `CODEOWNERS` corrigido: apontava para `@alexandersilva` (conta de terceiro!) → `@ScaTecnologia`.
+   - Dependabot alerts + security updates + `.github/dependabot.yml` (npm, pip, actions, docker; semanal). Abriu 15 PRs (#1–#15), **nenhum mergeado** — vários são major (ESLint 10, Node 25, Python 3.14, ioredis 6) e precisam de avaliação um a um.
+   - Secret scanning + push protection; CodeQL (default setup).
+   - Environment `production` com required reviewer ScaTecnologia, só a partir de branch protegida.
+5. ~~Criar o board Kanban~~ — https://github.com/users/ScaTecnologia/projects/2 ("LabSystem — Esteira"), colunas Backlog / To Do / Em Progresso / Em Revisão / Concluído, vinculado ao repositório. **Pendente manual:** ligar as automações nativas (aba do projeto → ⋯ → Workflows: "Item added", "Item closed", "Pull request merged", "Auto-add to project") — a API do GitHub não permite ligá-las; até lá, mover os cards à mão.
+6. ~~Rodar o exercício de múltiplos devs~~ — feito no GitHub real em 2026-09-24: issues #16 (Ana) e #17 (Bruno), PRs #18 e #19, conflito real no `git rebase origin/main` do Bruno, resolvido combinando as duas mudanças (`listar()` agora: limite padrão 100 + `ORDER BY nome`), CI verde nos dois PRs, merge commits preservando autoria. Obs.: `clientes.html` não pagina, então passa a mostrar no máximo 100 clientes.
+7. ~~Testar `docker compose up --build` e o `docker-build.yml` no GitHub~~ — feito em 2026-09-24 (build+scan verdes em push e PR; trivy-action fixada por SHA v0.36.0).
+8. **Próximos:** ligar as automações do board (item 5); triar os PRs do Dependabot; atualizar `docs/ROTEIRO_CICD_CLAUDE_CODE.md` (Passo 7), `docs/SETUP_NOVA_MAQUINA.md` e os `.docx`, que ainda descrevem o Docker como inativo.
 
 ---
 
