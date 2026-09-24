@@ -41,11 +41,9 @@ async function criar(dados) {
 // Lista clientes ordenados por id.
 // Com `limit` informado, aplica paginação (LIMIT/OFFSET); sem ele, retorna todos.
 async function listar(limit = null, offset = 0) {
-  if (limit !== null) {
-    const { rows } = await pool.query('SELECT * FROM clientes ORDER BY id LIMIT $1 OFFSET $2', [limit, offset]);
-    return rows;
-  }
-  const { rows } = await pool.query('SELECT * FROM clientes ORDER BY id');
+  // Ana: nunca listar sem limite — protege contra puxar a tabela inteira sem paginação.
+  const limitSeguro = limit !== null ? limit : 100;
+  const { rows } = await pool.query('SELECT * FROM clientes ORDER BY id LIMIT $1 OFFSET $2', [limitSeguro, offset]);
   return rows;
 }
 
