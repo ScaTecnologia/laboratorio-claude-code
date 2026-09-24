@@ -9,6 +9,11 @@
 # rede do compose — por isso DB_HOST=postgres em vez de localhost.
 # Redis e MongoDB são simulados em memória pelo próprio Node (src/redis.js,
 # src/mongo.js), então não há containers para eles.
+#
+# Portas publicadas no seu computador (padrão entre parênteses) podem ser
+# trocadas por variável — útil para rodar 2 cópias lado a lado, ver
+# docs/SIMULANDO_2_DEVS.md:  APP_PORT (3000), API_PY_PORT (3001), PG_PORT (5151)
+#   docker compose --env-file portas.env up --build -d
 # ============================================================================
 services:
   postgres:
@@ -18,7 +23,7 @@ services:
       POSTGRES_PASSWORD: "5151"
       POSTGRES_DB: laboratorio   # cria o banco já na 1ª inicialização do volume
     ports:
-      - "127.0.0.1:5151:5432"   # só acessível desta máquina
+      - "127.0.0.1:${PG_PORT:-5151}:5432"   # só acessível desta máquina
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -40,7 +45,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-3000}:3000"
     restart: unless-stopped
 
   fornecedores:
@@ -57,7 +62,7 @@ services:
     ports:
       # API sem autenticação: publicada só em 127.0.0.1, para depuração.
       # O Node a acessa pela rede interna do compose.
-      - "127.0.0.1:3001:3001"
+      - "127.0.0.1:${API_PY_PORT:-3001}:3001"
     restart: unless-stopped
 
 volumes:
