@@ -24,7 +24,7 @@ Os materiais de curso (`.pptx`, `.zip`, `Aula3_*` etc.) **não estão no Git** (
 
 | Ferramenta | Versão usada neste laboratório | Como checar |
 |---|---|---|
-| Node.js | 22.x | `node --version` |
+| Node.js | 24.x (LTS) | `node --version` |
 | Python | 3.13.x | `python3 --version` |
 | Git | qualquer recente | `git --version` |
 | PostgreSQL | rodando em `localhost:5151`, banco `laboratorio`, usuário `postgres`, senha `5151` | ver seção 4 |

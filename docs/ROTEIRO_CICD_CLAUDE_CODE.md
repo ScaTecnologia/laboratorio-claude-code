@@ -11,7 +11,7 @@
 - Conta no GitHub.
 - Git instalado e configurado localmente (`git config --global user.name/user.email`).
 - Claude Code configurado neste projeto (já está — veja `.claude/`).
-- Node.js 22+ e Python 3.13+ instalados (compatível com o que já roda localmente).
+- Node.js 24+ (LTS) e Python 3.13+ instalados (compatível com o que já roda localmente).
 
 ---
 

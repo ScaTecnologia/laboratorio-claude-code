@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: "22"
+  NODE_VERSION: "24"       # LTS; manter igual ao FROM do Dockerfile
   PYTHON_VERSION: "3.13"   # manter igual ao FROM do Dockerfile.python
 
 # Menor privilégio: o GITHUB_TOKEN dos jobs só lê o repositório.

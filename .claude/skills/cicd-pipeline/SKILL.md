@@ -39,7 +39,7 @@ Referência conceitual completa: `docs/DEVOPS_GUIA.md` e `docs/ROTEIRO_CICD_CLAU
 
 1. Validar localmente: `docker compose up --build -d`, testar login/clientes/fornecedores em `http://localhost:3000`, e rodar o mesmo scan do CI: `docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.70.0 image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 <imagem>`.
 1.1. Configuração de rede vem de variáveis de ambiente (`DB_HOST`, `DB_PORT`, `FORNECEDORES_HOST`, `FORNECEDORES_PORT`, `FLASK_HOST`) — nunca fixe `localhost` no código que roda em container.
-2. Manter imagens base fixadas por versão (ex.: `node:22-alpine`, não `node:latest`).
+2. Manter imagens base fixadas por versão (ex.: `node:24-alpine`, não `node:latest`).
 3. Multi-stage build quando fizer sentido (build separado de runtime), para imagem final menor.
 4. Nunca copiar `.env` ou segredos para dentro da imagem.
 
