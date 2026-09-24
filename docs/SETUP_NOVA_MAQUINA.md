@@ -25,7 +25,7 @@ Os materiais de curso (`.pptx`, `.zip`, `Aula3_*` etc.) **não estão no Git** (
 | Ferramenta | Versão usada neste laboratório | Como checar |
 |---|---|---|
 | Node.js | 22.x | `node --version` |
-| Python | 3.10.x | `python3 --version` |
+| Python | 3.13.x | `python3 --version` |
 | Git | qualquer recente | `git --version` |
 | PostgreSQL | rodando em `localhost:5151`, banco `laboratorio`, usuário `postgres`, senha `5151` | ver seção 4 |
 | Docker + Compose | recomendado — sobe Postgres + Node + Python com um comando (ver seção 6). Seu usuário precisa estar no grupo `docker` | `docker --version`, `docker compose version` |
@@ -50,7 +50,7 @@ pip install -r requirements-dev.txt
 Se o Python do sistema não tiver `venv`/`pip` (comum no Ubuntu sem o pacote `python3-venv`) e você não puder instalar, rode as ferramentas Python num container descartável — é o que foi feito na máquina Linux em 2026-09-24:
 
 ```bash
-docker run --rm -v "$PWD":/app:ro -w /app -e PYTHONDONTWRITEBYTECODE=1 python:3.10-slim sh -c \
+docker run --rm -v "$PWD":/app:ro -w /app -e PYTHONDONTWRITEBYTECODE=1 python:3.13-slim sh -c \
   "pip install -q -r requirements-dev.txt && flake8 src/ tests/ --config=.flake8 && pytest tests/ -q -p no:cacheprovider && bandit -r src/ -q"
 ```
 
