@@ -119,3 +119,4 @@ bandit -r src/ -q                     # SAST Python
 | `docs/COLABORACAO_EQUIPE.md` | Como vários devs trabalham no mesmo repo sem se atropelar: branches, PRs, CODEOWNERS, conflitos |
 | `docs/EXERCICIO_MULTIPLOS_DEVS.md` | Exercício prático (comandos reais) simulando 2 devs e um conflito de merge, do início ao fim |
 | `docs/BACKLOG_KANBAN.md` | Como configurar e usar o board Kanban (GitHub Projects) para o backlog de tarefas |
+| `docs/SIMULANDO_2_DEVS.md` | Simular 2 devs na mesma máquina: pastas `~/devs/dev1` e `~/devs/dev2`, cada uma com seus containers e portas (`portas.env`) |

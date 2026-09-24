@@ -9,7 +9,7 @@
 set -e
 cd "$(dirname "$0")"
 for doc in BACKLOG_KANBAN COLABORACAO_EQUIPE DEVOPS_GUIA EXERCICIO_MULTIPLOS_DEVS \
-           ROTEIRO_CICD_CLAUDE_CODE SETUP_NOVA_MAQUINA STATUS_LABORATORIO; do
+           ROTEIRO_CICD_CLAUDE_CODE SETUP_NOVA_MAQUINA SIMULANDO_2_DEVS STATUS_LABORATORIO; do
   docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/data pandoc/core:3.11 \
     "$doc.md" -f gfm -o "$doc.docx"
   echo "ok  docs/$doc.docx"

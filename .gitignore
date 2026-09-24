@@ -29,3 +29,6 @@ docs/_preview_layout/
 
 # PDF gerado só para conferência visual do DEVOPS_GUIA.docx
 docs/DEVOPS_GUIA.pdf
+
+# Portas locais de cada "dev" simulado (docs/SIMULANDO_2_DEVS.md)
+portas.env
