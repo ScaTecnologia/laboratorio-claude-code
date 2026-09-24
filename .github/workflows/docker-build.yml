@@ -50,7 +50,7 @@ jobs:
     name: Build imagem Node
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build
         run: docker build -t labsystem-node:${{ github.sha }} -f Dockerfile .
       - name: Salvar imagem para os próximos jobs
@@ -65,7 +65,7 @@ jobs:
     name: Build imagem Python (Fornecedores)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build
         run: docker build -t labsystem-fornecedores:${{ github.sha }} -f Dockerfile.python .
       - name: Salvar imagem para os próximos jobs
@@ -175,7 +175,7 @@ jobs:
       name: production
       # url: https://labsystem.exemplo.com   # descomente quando existir ambiente real
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Deploy (placeholder — substituir por SSH/kubectl/etc. em ambiente real)
         run: |
           echo "Deploy aprovado por revisor humano do ambiente 'production'."
