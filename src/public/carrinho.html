@@ -38,7 +38,7 @@
   </header>
 
   <main class="main">
-    <div class="container">
+    <div class="container container-wide">
 
       <h1 class="page-title">Carrinho de Compras <span class="redis-tag">100% Redis</span></h1>
 
@@ -51,6 +51,11 @@
           com TTL de 10 minutos para completar o pagamento.
         </div>
       </div>
+
+      <div class="split-layout">
+
+      <!-- Coluna esquerda: adicionar item -->
+      <div class="split-col">
 
       <!-- Adicionar ao carrinho -->
       <div class="card">
@@ -71,6 +76,11 @@
         </div>
         <div class="mensagem" id="msg-add" role="alert" aria-live="polite"></div>
       </div>
+
+      </div>
+
+      <!-- Coluna direita: carrinho + checkout -->
+      <div class="split-col">
 
       <!-- Conteúdo do carrinho -->
       <div class="card">
@@ -110,6 +120,10 @@
           Acesse <a href="/estoque.html">Gestão de Estoque</a> para ver as reservas ativas no Redis
           e simular a confirmação do pagamento.
         </p>
+      </div>
+
+      </div>
+
       </div>
 
     </div>

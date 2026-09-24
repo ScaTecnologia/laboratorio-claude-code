@@ -38,7 +38,7 @@
     .hbar-count   { width:40px; text-align:right; font-size:.82rem; font-weight:600; color:#374151; }
 
     /* Gráfico de horas */
-    .hora-chart   { display:flex; align-items:flex-end; gap:4px; height:100px;
+    .hora-chart   { display:flex; align-items:flex-end; gap:4px; height:150px;
                     border-bottom:2px solid #e5e7eb; padding:0 4px; margin-top:8px; }
     .hora-bar     { flex:1; background:#3b82f6; border-radius:3px 3px 0 0; min-height:2px;
                     cursor:default; transition:background .2s; position:relative; }
@@ -78,7 +78,7 @@
   </header>
 
   <main class="main">
-    <div class="container">
+    <div class="container container-fluid">
 
       <h1 class="page-title">Relatório Black Friday <span class="mongo-tag">MongoDB Aggregation</span></h1>
 
@@ -96,35 +96,40 @@
         <div class="metric-card"><div class="metric-value">—</div><div class="metric-label">Clientes Únicos</div></div>
       </div>
 
-      <!-- Funil de conversão -->
-      <div class="card" style="margin-top:20px">
-        <p class="card-title">Funil de Conversão</p>
-        <p style="font-size:.82rem;color:#6b7280;margin-bottom:12px">
-          Calculado com <code>$group</code> no MongoDB — mostra onde os clientes abandonam o processo de compra.
-        </p>
-        <div class="funnel" id="funil"></div>
-      </div>
+      <!-- Grade de gráficos — distribuída na horizontal e vertical -->
+      <div class="dashboard-grid">
 
-      <!-- Top produtos visualizados e adicionados ao carrinho -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+        <!-- Funil de conversão -->
+        <div class="card">
+          <p class="card-title">Funil de Conversão</p>
+          <p style="font-size:.82rem;color:#6b7280;margin-bottom:12px">
+            Calculado com <code>$group</code> no MongoDB — mostra onde os clientes abandonam o processo de compra.
+          </p>
+          <div class="funnel" id="funil"></div>
+        </div>
+
+        <!-- Distribuição por hora -->
+        <div class="card">
+          <p class="card-title">Volume de Eventos por Hora</p>
+          <p style="font-size:.82rem;color:#6b7280;margin-bottom:4px">Identifica picos de acesso durante a Black Friday.</p>
+          <div class="hora-chart" id="hora-chart"></div>
+          <div class="hora-labels" id="hora-labels"></div>
+        </div>
+
+        <!-- Top 5 mais visualizados -->
         <div class="card">
           <p class="card-title">Top 5 — Mais Visualizados</p>
           <p style="font-size:.78rem;color:#9ca3af;margin-bottom:10px">Pipeline: <code>$match → $group → $sort → $limit</code></p>
           <div class="hbar-list" id="top-visualizados"></div>
         </div>
+
+        <!-- Top 5 mais adicionados ao carrinho -->
         <div class="card">
           <p class="card-title">Top 5 — Mais Adicionados ao Carrinho</p>
           <p style="font-size:.78rem;color:#9ca3af;margin-bottom:10px">Pipeline: <code>$match → $group → $sort → $limit</code></p>
           <div class="hbar-list" id="top-carrinho"></div>
         </div>
-      </div>
 
-      <!-- Distribuição por hora -->
-      <div class="card" style="margin-top:16px">
-        <p class="card-title">Volume de Eventos por Hora</p>
-        <p style="font-size:.82rem;color:#6b7280;margin-bottom:4px">Identifica picos de acesso durante a Black Friday.</p>
-        <div class="hora-chart" id="hora-chart"></div>
-        <div class="hora-labels" id="hora-labels"></div>
       </div>
 
     </div>

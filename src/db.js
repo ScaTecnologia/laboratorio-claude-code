@@ -1,8 +1,9 @@
 const { Pool } = require('pg');
 
 const config = {
-  host: 'localhost',
-  port: 5151,
+  // Padrão: Postgres local. No docker-compose, DB_HOST=postgres e DB_PORT=5432.
+  host: process.env.DB_HOST || 'localhost',
+  port: Number(process.env.DB_PORT) || 5151,
   user: 'postgres',
   password: '5151',
 };

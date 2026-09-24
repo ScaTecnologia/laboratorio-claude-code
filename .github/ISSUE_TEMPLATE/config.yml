@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentação de colaboração em equipe
+    url: https://github.com/SEU-USUARIO/laboratorio-claude-code/blob/main/docs/COLABORACAO_EQUIPE.md
+    about: Como o backlog, as branches e as revisões funcionam neste projeto.

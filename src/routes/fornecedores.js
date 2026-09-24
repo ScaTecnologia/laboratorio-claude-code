@@ -7,7 +7,10 @@ function responder(res, status, dados) {
 
 function proxyParaPython(req, res) {
   return new Promise(resolve => {
-    const options = { hostname: 'localhost', port: 3001, path: req.url, method: req.method,
+    // No docker-compose, FORNECEDORES_HOST=fornecedores (nome do serviço).
+    const options = { hostname: process.env.FORNECEDORES_HOST || 'localhost',
+                      port: Number(process.env.FORNECEDORES_PORT) || 3001,
+                      path: req.url, method: req.method,
                       headers: { 'Content-Type': 'application/json' } };
     const proxyReq = http.request(options, proxyRes => {
       res.writeHead(proxyRes.statusCode, { 'Content-Type': 'application/json' });

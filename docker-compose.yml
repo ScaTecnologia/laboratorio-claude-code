@@ -1,0 +1,64 @@
+# ============================================================================
+# docker-compose.yml — ambiente completo do LabSystem
+# ----------------------------------------------------------------------------
+#   docker compose up --build -d     # sobe tudo em segundo plano
+#   docker compose logs -f node      # acompanha os logs
+#   docker compose down              # derruba (dados do Postgres ficam no volume)
+#
+# Os serviços se enxergam pelo nome (postgres, node, fornecedores) dentro da
+# rede do compose — por isso DB_HOST=postgres em vez de localhost.
+# Redis e MongoDB são simulados em memória pelo próprio Node (src/redis.js,
+# src/mongo.js), então não há containers para eles.
+# ============================================================================
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "5151"
+      POSTGRES_DB: laboratorio   # cria o banco já na 1ª inicialização do volume
+    ports:
+      - "127.0.0.1:5151:5432"   # só acessível desta máquina
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - labsystem_postgres_data:/var/lib/postgresql/data
+
+  node:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      FORNECEDORES_HOST: fornecedores
+      FORNECEDORES_PORT: "3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  fornecedores:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      FLASK_HOST: 0.0.0.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      # API sem autenticação: publicada só em 127.0.0.1, para depuração.
+      # O Node a acessa pela rede interna do compose.
+      - "127.0.0.1:3001:3001"
+    restart: unless-stopped
+
+volumes:
+  labsystem_postgres_data:

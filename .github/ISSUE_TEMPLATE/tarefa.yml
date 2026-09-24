@@ -1,0 +1,51 @@
+name: "Tarefa (backlog)"
+description: "Um item de trabalho a ser feito — vira uma card no board Kanban e uma branch quando alguém pegar."
+title: "[Tarefa] "
+labels: ["tarefa"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ver `docs/BACKLOG_KANBAN.md` para como este item se move pelo board
+        (To Do → Em Progresso → Em Revisão → Concluído).
+
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto / problema
+      description: O que existe hoje e por que precisa mudar.
+    validations:
+      required: true
+
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Critérios de aceite
+      description: Como saber que a tarefa está pronta (lista objetiva).
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área afetada
+      options:
+        - Frontend (src/public)
+        - Backend Node (src/*.js)
+        - API Python (fornecedores)
+        - Banco de dados
+        - CI/CD (.github/workflows)
+        - Documentação
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: prontidao
+    attributes:
+      label: Antes de pegar esta tarefa
+      options:
+        - label: Me atribuí a esta issue (assign) para sinalizar ao time que estou trabalhando nela
+        - label: Vou criar uma branch a partir da main atualizada (ver docs/COLABORACAO_EQUIPE.md, seção 2.2)

@@ -1,7 +1,7 @@
 # ARCHITECTURE.md
 
-Documento de arquitetura do **LabSystem** — decisões estruturais, camadas, fluxos e componentes.
 
+Documento de arquitetura do **LabSystem** — decisões estruturais, camadas, fluxos e componentes.
 ---
 
 ## Visão geral

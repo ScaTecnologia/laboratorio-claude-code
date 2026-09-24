@@ -1,0 +1,40 @@
+name: "Bug"
+description: "Algo que deveria funcionar e não funciona."
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: comportamento-atual
+    attributes:
+      label: Comportamento atual
+    validations:
+      required: true
+
+  - type: textarea
+    id: comportamento-esperado
+    attributes:
+      label: Comportamento esperado
+    validations:
+      required: true
+
+  - type: textarea
+    id: passos
+    attributes:
+      label: Passos para reproduzir
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severidade
+    attributes:
+      label: Severidade
+      options:
+        - Baixa (cosmético)
+        - Média (funcionalidade parcial)
+        - Alta (funcionalidade quebrada)
+        - Crítica (segurança / dados / produção)
+    validations:
+      required: true

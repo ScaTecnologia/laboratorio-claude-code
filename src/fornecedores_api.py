@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+import os
 import psycopg2
 import psycopg2.extras
 import re
@@ -6,11 +7,12 @@ import re
 app = Flask(__name__)
 
 DB = {
-    'host':     'localhost',
-    'port':     5151,
+    # Padrão: Postgres local. No docker-compose, DB_HOST=postgres e DB_PORT=5432.
+    'host':     os.environ.get('DB_HOST', 'localhost'),
+    'port':     int(os.environ.get('DB_PORT', '5151')),
     'database': 'laboratorio',
     'user':     'postgres',
-    'password': '5151',
+    'password': '5151',  # nosec B105: credencial de laboratório local, não de produção (ver CLAUDE.md)
 }
 
 CAMPOS = ['nomefantasia', 'nomeempresa', 'endereco', 'bairro', 'cidade', 'estado', 'email', 'telefone', 'cnpj']
@@ -24,6 +26,7 @@ def validar_cnpj(cnpj):
     cnpj = re.sub(r'\D', '', str(cnpj))
     if len(cnpj) != 14 or len(set(cnpj)) == 1:
         return False
+
     def digito(c, pesos):
         s = sum(int(c[i]) * pesos[i] for i in range(len(pesos)))
         r = s % 11
@@ -55,7 +58,7 @@ def init_db():
 
 @app.route('/fornecedores', methods=['GET'])
 def listar():
-    limit  = request.args.get('limit',  type=int)
+    limit = request.args.get('limit', type=int)
     offset = request.args.get('offset', 0, type=int)
     with get_conn() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -88,8 +91,11 @@ def criar():
     with get_conn() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             placeholders = ','.join(['%s'] * len(CAMPOS))
+            # nosec B608: mesmo caso do UPDATE em atualizar() — apenas nomes
+            # de coluna de CAMPOS (lista fixa) são interpolados; valores vão
+            # parametrizados via %s.
             cur.execute(
-                f"INSERT INTO fornecedores ({','.join(CAMPOS)}) VALUES ({placeholders}) RETURNING *",
+                f"INSERT INTO fornecedores ({','.join(CAMPOS)}) VALUES ({placeholders}) RETURNING *",  # nosec B608
                 valores,
             )
             row = cur.fetchone()
@@ -112,8 +118,11 @@ def atualizar(fid):
     valores.append(fid)
     with get_conn() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            # nosec B608: `sets` interpola apenas nomes de coluna de CAMPOS
+            # (lista fixa, não vinda do usuário) — os VALORES sempre vão
+            # parametrizados via %s em `valores`. Sem risco de SQL injection.
             cur.execute(
-                f"UPDATE fornecedores SET {', '.join(sets)} WHERE id = %s RETURNING *",
+                f"UPDATE fornecedores SET {', '.join(sets)} WHERE id = %s RETURNING *",  # nosec B608
                 valores,
             )
             row = cur.fetchone()
@@ -138,4 +147,6 @@ def deletar(fid):
 if __name__ == '__main__':
     init_db()
     print('API de Fornecedores rodando em http://localhost:3001')
-    app.run(host='127.0.0.1', port=3001, debug=False)
+    # Padrão 127.0.0.1 (só a própria máquina). No container, FLASK_HOST=0.0.0.0
+    # para a porta publicada pelo Docker ficar acessível.
+    app.run(host=os.environ.get('FLASK_HOST', '127.0.0.1'), port=3001, debug=False)

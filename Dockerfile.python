@@ -1,0 +1,19 @@
+# ============================================================================
+# Dockerfile.python — API de Fornecedores (src/fornecedores_api.py)
+# ----------------------------------------------------------------------------
+# Uso normal: `docker compose up --build`.
+# Isolado:    docker build -f Dockerfile.python -t labsystem-fornecedores .
+# ============================================================================
+FROM python:3.10-slim
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1
+RUN addgroup --system app && adduser --system --ingroup app app
+COPY requirements.txt ./
+# Atualiza as ferramentas de empacotamento da imagem base (versões antigas
+# de wheel/setuptools têm CVEs HIGH com correção disponível).
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r requirements.txt
+COPY src/fornecedores_api.py ./src/fornecedores_api.py
+USER app
+EXPOSE 3001
+CMD ["python", "src/fornecedores_api.py"]

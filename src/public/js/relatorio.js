@@ -112,7 +112,7 @@ function renderizarHoras(porHora) {
   const max = Math.max(...porHora.map(h => h.count), 1);
   chart.innerHTML = porHora.map(h => {
     const pct = Math.max(2, Math.round((h.count / max) * 100));
-    const label = `${String(h.hora).padStart(2,'0')}h — ${h.count} evento(s)`;
+    const label = `${String(h.hora).padStart(2,'0')}h - ${h.count} Ev.`;
     return `<div class="hora-bar" style="height:${pct}%" title="${label}"></div>`;
   }).join('');
 

@@ -1,1 +1,30 @@
 node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.env.*
+
+# Arquivos de lock/temporários do LibreOffice/OneDrive (gerados ao converter
+# .docx -> .pdf para conferência visual; ver docs/STATUS_LABORATORIO.md)
+.~lock.*#
+*.tmp
+
+# Logs gerados pelos hooks do Claude Code a cada comando (.claude/settings.json)
+bash_commands.log
+.claude/bash_log.txt
+
+# Materiais de curso/apoio pessoal — ficam na pasta local, fora do repositório
+# (pesados e não fazem parte do sistema; um .pptx passa de 60 MB)
+Aula3_*
+Sistema_Cadastro_Clientes_v2.zip
+docs/Caso_de_Uso_*.pptx
+docs/LabSystem_Documentacao_Tecnica.docx
+docs/ANALISE_PRODUCAO_IA*.md
+docs/gerar_apresentacao.py
+docs/gerar_docx.py
+docs/Prompt Jev.txt
+docs/_preview_layout/
+
+# PDF gerado só para conferência visual do DEVOPS_GUIA.docx
+docs/DEVOPS_GUIA.pdf

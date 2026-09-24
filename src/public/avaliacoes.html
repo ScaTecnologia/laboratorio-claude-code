@@ -74,7 +74,7 @@
   </header>
 
   <main class="main">
-    <div class="container">
+    <div class="container container-wide">
 
       <h1 class="page-title">Avaliações de Produtos <span class="mongo-tag">MongoDB</span></h1>
 
@@ -88,6 +88,11 @@
           O campo <code>dataCriacao</code> e <code>dataAtualizacao</code> são controlados pelo próprio documento.
         </div>
       </div>
+
+      <div class="split-layout">
+
+      <!-- Coluna esquerda: ações, filtros e formulário -->
+      <div class="split-col">
 
       <!-- Dados de teste -->
       <div class="card">
@@ -185,6 +190,11 @@
         <div class="mensagem" id="mensagem" role="alert" aria-live="polite"></div>
       </div>
 
+      </div>
+
+      <!-- Coluna direita: lista -->
+      <div class="split-col">
+
       <!-- Lista de avaliações -->
       <div class="card">
         <p class="card-title">
@@ -210,6 +220,10 @@
           </table>
         </div>
         <div id="paginacao" style="display:flex;gap:8px;margin-top:12px;align-items:center"></div>
+      </div>
+
+      </div>
+
       </div>
 
     </div>

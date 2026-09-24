@@ -27,10 +27,13 @@ Leia nesta ordem — cada arquivo responde uma pergunta diferente:
 
 | Arquivo | Pergunta respondida |
 |---------|-------------------|
+| `docs/STATUS_LABORATORIO.md` | **Leia primeiro.** O que já foi feito, o que falta, próximos passos concretos, problemas conhecidos do ambiente |
 | `docs/PROJECT_CONTEXT.md` | O que foi construído, como funciona, credenciais, comandos |
 | `docs/ARCHITECTURE.md` | Como os componentes se relacionam, fluxos, segurança |
 | `CLAUDE.md` | Regras do projeto que você deve seguir |
 | `DOCS.md` | Descrição técnica de cada arquivo |
+
+Se a tarefa da sessão for sobre CI/CD, containers ou colaboração em equipe, `docs/STATUS_LABORATORIO.md` já aponta para os documentos certos (`DEVOPS_GUIA.md`, `ROTEIRO_CICD_CLAUDE_CODE.md`, `COLABORACAO_EQUIPE.md`, `EXERCICIO_MULTIPLOS_DEVS.md`, `BACKLOG_KANBAN.md`, `SETUP_NOVA_MAQUINA.md`) — não é preciso ler todos de uma vez, apenas saber que existem.
 
 ### 2. Verificar o estado atual do repositório
 

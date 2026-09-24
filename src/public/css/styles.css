@@ -421,7 +421,68 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
   margin-bottom: 24px;
 }
 
+/* ── Wide / fluid containers ─────────────────────────── */
+
+.container-wide  { max-width: 1200px; }
+.container-fluid { max-width: 1600px; }
+
+/* ── Cadastro: formulário à esquerda, lista à direita ── */
+
+.cadastro-layout {
+  display: grid;
+  grid-template-columns: minmax(360px, 460px) 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.cadastro-layout > .card { margin-bottom: 0; }
+
+/* Quando o formulário está oculto (ex.: Produtos p/ não-Admin),
+   a lista passa a ocupar toda a largura */
+.cadastro-layout:has(> [hidden]) { grid-template-columns: 1fr; }
+
+/* ── Split: coluna de controles (esq.) + lista (dir.) ── */
+/* Para telas com vários cards por coluna (Estoque, Carrinho,
+   Avaliações, Eventos). Cada coluna é um wrapper .split-col. */
+
+.split-layout {
+  display: grid;
+  grid-template-columns: minmax(360px, 460px) 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.split-col > .card:last-child { margin-bottom: 0; }
+
+/* ── Dashboard de relatórios (gráficos em grade) ─────── */
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+  grid-auto-rows: minmax(240px, auto);
+}
+
+.dashboard-grid > .card {
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Área do gráfico cresce para preencher a altura do card */
+.dashboard-grid .funnel,
+.dashboard-grid .hbar-list { flex: 1; }
+
 /* ── Responsive ──────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .cadastro-layout { grid-template-columns: 1fr; }
+  .cadastro-layout > .card { margin-bottom: 24px; }
+  .split-layout    { grid-template-columns: 1fr; }
+  .split-col > .card:last-child { margin-bottom: 24px; }
+  .dashboard-grid  { grid-template-columns: 1fr; }
+}
 
 @media (max-width: 600px) {
   .header { padding: 0 12px; gap: 8px; }

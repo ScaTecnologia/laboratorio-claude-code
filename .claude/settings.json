@@ -2,6 +2,19 @@
   "hooks": {
     "PreToolUse": [
       {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/security-guardrail.js"
+          },
+          {
+            "type": "command",
+            "command": "node .claude/hooks/pipeline-guardrail.js"
+          }
+        ]
+      },
+      {
         "matcher": "Bash",
         "hooks": [
           {

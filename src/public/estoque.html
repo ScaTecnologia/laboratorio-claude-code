@@ -38,7 +38,7 @@
   </header>
 
   <main class="main">
-    <div class="container">
+    <div class="container container-wide">
 
       <h1 class="page-title">Gestão de Estoque — Reservas Redis</h1>
 
@@ -55,91 +55,103 @@
         </div>
       </div>
 
-      <!-- Tabela de estoque -->
-      <div class="card">
-        <p class="card-title">
-          Estoque atual
-          <button class="btn btn-sm btn-secondary" onclick="carregar()" style="margin-left:12px">↻ Atualizar</button>
-        </p>
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">Produto</th>
-                <th scope="col">Em Estoque (DB)</th>
-                <th scope="col">Reservado (Redis)</th>
-                <th scope="col">Disponível</th>
-                <th scope="col">TTL Reserva</th>
-                <th scope="col" id="col-acoes" hidden>Atualizar Qtd</th>
-              </tr>
-            </thead>
-            <tbody id="tabela-body"></tbody>
-          </table>
-        </div>
-        <div id="paginacao" style="display:flex;align-items:center;gap:12px;padding:12px 0;flex-wrap:wrap"></div>
-        <div class="mensagem" id="msg-estoque" role="alert" aria-live="polite"></div>
-      </div>
+      <div class="split-layout">
 
-      <!-- Simular reserva -->
-      <div class="card">
-        <p class="card-title">Simular Reserva no Redis</p>
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="sel-produto-reserva">Produto</label>
-            <select id="sel-produto-reserva"></select>
-          </div>
-          <div class="form-group">
-            <label for="qtd-reserva">Quantidade</label>
-            <input type="number" id="qtd-reserva" min="1" value="1" />
-          </div>
-        </div>
-        <div class="form-actions">
-          <button class="btn btn-primary" onclick="reservar()">🔒 Reservar (10 min)</button>
-          <button class="btn btn-secondary" onclick="liberarReserva()">🔓 Liberar Reserva</button>
-        </div>
-        <div class="mensagem" id="msg-reserva" role="alert" aria-live="polite"></div>
-      </div>
+        <!-- Coluna esquerda: simulações e ações -->
+        <div class="split-col">
 
-      <!-- Confirmar venda (Admin) -->
-      <div class="card" id="card-confirmar" hidden>
-        <p class="card-title">Confirmar Venda — Debitar Estoque</p>
-        <p style="font-size:.88rem;color:#666;margin-bottom:12px">
-          Simula a aprovação do pagamento: debita o estoque no banco e remove a reserva do Redis.
-        </p>
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="sel-produto-confirmar">Produto</label>
-            <select id="sel-produto-confirmar"></select>
+          <!-- Simular reserva -->
+          <div class="card">
+            <p class="card-title">Simular Reserva no Redis</p>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="sel-produto-reserva">Produto</label>
+                <select id="sel-produto-reserva"></select>
+              </div>
+              <div class="form-group">
+                <label for="qtd-reserva">Quantidade</label>
+                <input type="number" id="qtd-reserva" min="1" value="1" />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" onclick="reservar()">🔒 Reservar (10 min)</button>
+              <button class="btn btn-secondary" onclick="liberarReserva()">🔓 Liberar Reserva</button>
+            </div>
+            <div class="mensagem" id="msg-reserva" role="alert" aria-live="polite"></div>
           </div>
-          <div class="form-group">
-            <label for="qtd-confirmar">Quantidade vendida</label>
-            <input type="number" id="qtd-confirmar" min="1" value="1" />
-          </div>
-        </div>
-        <div class="form-actions">
-          <button class="btn btn-primary" onclick="confirmarVenda()">✅ Confirmar Venda</button>
-        </div>
-        <div class="mensagem" id="msg-confirmar" role="alert" aria-live="polite"></div>
-      </div>
 
-      <!-- Atualizar estoque (Admin) -->
-      <div class="card" id="card-atualizar" hidden>
-        <p class="card-title">Atualizar Quantidade em Estoque (Admin)</p>
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="sel-produto-atualizar">Produto</label>
-            <select id="sel-produto-atualizar"></select>
+          <!-- Confirmar venda (Admin) -->
+          <div class="card" id="card-confirmar" hidden>
+            <p class="card-title">Confirmar Venda — Debitar Estoque</p>
+            <p style="font-size:.88rem;color:#666;margin-bottom:12px">
+              Simula a aprovação do pagamento: debita o estoque no banco e remove a reserva do Redis.
+            </p>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="sel-produto-confirmar">Produto</label>
+                <select id="sel-produto-confirmar"></select>
+              </div>
+              <div class="form-group">
+                <label for="qtd-confirmar">Quantidade vendida</label>
+                <input type="number" id="qtd-confirmar" min="1" value="1" />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" onclick="confirmarVenda()">✅ Confirmar Venda</button>
+            </div>
+            <div class="mensagem" id="msg-confirmar" role="alert" aria-live="polite"></div>
           </div>
-          <div class="form-group">
-            <label for="qtd-nova">Nova quantidade</label>
-            <input type="number" id="qtd-nova" min="0" value="0" />
+
+          <!-- Atualizar estoque (Admin) -->
+          <div class="card" id="card-atualizar" hidden>
+            <p class="card-title">Atualizar Quantidade em Estoque (Admin)</p>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="sel-produto-atualizar">Produto</label>
+                <select id="sel-produto-atualizar"></select>
+              </div>
+              <div class="form-group">
+                <label for="qtd-nova">Nova quantidade</label>
+                <input type="number" id="qtd-nova" min="0" value="0" />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" onclick="atualizarEstoque()">Salvar Quantidade</button>
+            </div>
+            <div class="mensagem" id="msg-atualizar" role="alert" aria-live="polite"></div>
+          </div>
+
+        </div>
+
+        <!-- Coluna direita: tabela de estoque -->
+        <div class="split-col">
+          <!-- Tabela de estoque -->
+          <div class="card">
+            <p class="card-title">
+              Estoque atual
+              <button class="btn btn-sm btn-secondary" onclick="carregar()" style="margin-left:12px">↻ Atualizar</button>
+            </p>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Produto</th>
+                    <th scope="col">Em Estoque (DB)</th>
+                    <th scope="col">Reservado (Redis)</th>
+                    <th scope="col">Disponível</th>
+                    <th scope="col">TTL Reserva</th>
+                    <th scope="col" id="col-acoes" hidden>Atualizar Qtd</th>
+                  </tr>
+                </thead>
+                <tbody id="tabela-body"></tbody>
+              </table>
+            </div>
+            <div id="paginacao" style="display:flex;align-items:center;gap:12px;padding:12px 0;flex-wrap:wrap"></div>
+            <div class="mensagem" id="msg-estoque" role="alert" aria-live="polite"></div>
           </div>
         </div>
-        <div class="form-actions">
-          <button class="btn btn-primary" onclick="atualizarEstoque()">Salvar Quantidade</button>
-        </div>
-        <div class="mensagem" id="msg-atualizar" role="alert" aria-live="polite"></div>
+
       </div>
 
     </div>

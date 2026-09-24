@@ -1,0 +1,137 @@
+name: CI
+
+# Roda em toda branch (push) e em toda Pull Request para main, para que a
+# proteção de branch (docs/ROTEIRO_CICD_CLAUDE_CODE.md, Passo 2) tenha um
+# check para exigir antes do merge.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+# Cancela execuções antigas do mesmo branch/PR quando um novo push chega —
+# evita gastar minutos de runner com um resultado que já ficou obsoleto.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  PYTHON_VERSION: "3.10"
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────
+  # Lint — rápido e barato, roda primeiro para dar feedback em segundos.
+  # ────────────────────────────────────────────────────────────────────────
+  lint-node:
+    name: Lint (ESLint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run lint
+
+  lint-python:
+    name: Lint (Flake8)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+      - run: pip install -r requirements-dev.txt
+      - run: flake8 src/ tests/ --config=.flake8
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Testes unitários — sem dependências externas (inclui adaptadores
+  # in-memory de Mongo/Redis usados neste projeto).
+  # ────────────────────────────────────────────────────────────────────────
+  test-node-unit:
+    name: Testes unitários (Node)
+    runs-on: ubuntu-latest
+    needs: lint-node
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run test:unit
+
+  test-python-unit:
+    name: Testes unitários (Python)
+    runs-on: ubuntu-latest
+    needs: lint-python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+      - run: pip install -r requirements-dev.txt
+      - run: pytest tests/ -v
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Testes de integração — usam um Postgres real, mas como *serviço do
+  # runner do GitHub* (não Docker local). Compatível com máquinas Unisys,
+  # que só restringem Docker no ambiente local do desenvolvedor.
+  # ────────────────────────────────────────────────────────────────────────
+  test-integration:
+    name: Testes de integração (Postgres)
+    runs-on: ubuntu-latest
+    needs: test-node-unit
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: "5151"
+          POSTGRES_DB: postgres
+        ports:
+          - 5151:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - name: Rodar testes de integração
+        run: npm run test:integration
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Segurança — dependências vulneráveis (SCA) e análise estática (SAST).
+  # ────────────────────────────────────────────────────────────────────────
+  security-scan:
+    name: Scan de segurança
+    runs-on: ubuntu-latest
+    needs: [lint-node, lint-python]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+      - run: npm ci
+      - name: npm audit (dependências Node)
+        run: npm audit --audit-level=high
+      - run: pip install -r requirements-dev.txt
+      - name: pip-audit (dependências Python)
+        run: pip-audit -r requirements.txt
+      - name: Bandit (SAST Python)
+        run: bandit -r src/ -q

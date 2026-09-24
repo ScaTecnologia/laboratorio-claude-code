@@ -1,0 +1,29 @@
+# CODEOWNERS — define quem precisa revisar (obrigatoriamente) mudanças em
+# cada parte do projeto. Combinado com branch protection ("Require review
+# from Code Owners"), o GitHub bloqueia o merge até a pessoa/time listado
+# aprovar. Ver docs/COLABORACAO_EQUIPE.md, seção 3.2.
+#
+# Formato: <padrão de caminho>  <@usuario-ou-time> [@outro-usuario ...]
+# O padrão mais específico que casar é o que vale (como .gitignore).
+
+# Dono padrão do repositório — usado quando nenhuma regra mais específica casa.
+*                                @alexandersilva
+
+# Autenticação e controle de acesso — área sensível, revisão obrigatória.
+/src/middlewares/                @alexandersilva
+/src/routes/auth.js              @alexandersilva
+/src/usuarios.js                 @alexandersilva
+/src/sessoes.js                  @alexandersilva
+
+# Esteira de CI/CD e infraestrutura — mudanças aqui afetam todo o time.
+/.github/                        @alexandersilva
+/Dockerfile                      @alexandersilva
+/Dockerfile.python               @alexandersilva
+/docker-compose.yml              @alexandersilva
+/.claude/hooks/                  @alexandersilva
+/.claude/settings.json           @alexandersilva
+
+# Documentação de processo — mudar as regras do jogo também precisa de revisão.
+/CLAUDE.md                       @alexandersilva
+/docs/COLABORACAO_EQUIPE.md      @alexandersilva
+/docs/DEVOPS_GUIA.md             @alexandersilva

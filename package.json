@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node src/soma.test.js"
+    "test": "node src/soma.test.js",
+    "lint": "eslint src --ext .js",
+    "test:unit": "node src/soma.test.js && node src/teste_mongo.js",
+    "test:integration": "node src/usuarios.test.js && node src/teste_redis.js"
   },
   "keywords": [],
   "author": "",
@@ -13,5 +16,8 @@
   "dependencies": {
     "ioredis": "^5.3.2",
     "pg": "^8.21.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1"
   }
 }

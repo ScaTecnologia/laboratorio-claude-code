@@ -1,0 +1,179 @@
+name: Docker Build, Scan & Deploy
+
+# ============================================================================
+# GATILHOS:
+#   - push / pull_request na main → roda AUTOMATICAMENTE só build + scan
+#     (Trivy). Uma imagem com vulnerabilidade CRITICAL/HIGH quebra o PR.
+#   - workflow_dispatch (manual, aba Actions) → build + scan e, se marcado
+#     nos inputs, publish no GHCR e/ou deploy em produção.
+# Publish e deploy NUNCA rodam automaticamente: os dois jobs exigem
+# github.event_name == 'workflow_dispatch'. O hook
+# .claude/hooks/pipeline-guardrail.js bloqueia edições que removam essa trava.
+#
+# Caminho completo representado aqui (ver docs/COLABORACAO_EQUIPE.md e
+# docs/ROTEIRO_CICD_CLAUDE_CODE.md, Passo 7):
+#   build imagem → scan de vulnerabilidade da imagem (Trivy) → (opcional)
+#   publicar no registry → deploy em produção, SÓ liberado depois de
+#   aprovação humana no ambiente protegido "production" (GitHub Environment).
+# Configurar o ambiente: Settings → Environments → New environment →
+# "production" → Required reviewers (adicionar quem pode aprovar deploys).
+# Sem essa configuração, os jobs deploy-* ficam esperando indefinidamente,
+# o que é o comportamento correto (nada vai para produção sem uma pessoa
+# aprovar explicitamente).
+# ============================================================================
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      push_image:
+        description: "Publicar a imagem no GitHub Container Registry (ghcr.io)?"
+        type: boolean
+        default: false
+      deploy_production:
+        description: "Rodar o deploy em produção após o build+scan (requer aprovação do ambiente production)?"
+        type: boolean
+        default: false
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────
+  # BUILD — gera a imagem a partir do Dockerfile correspondente.
+  # ──────────────────────────────────────────────────────────────────────
+  build-node:
+    name: Build imagem Node
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: docker build -t labsystem-node:${{ github.sha }} -f Dockerfile .
+      - name: Salvar imagem para os próximos jobs
+        run: docker save labsystem-node:${{ github.sha }} -o labsystem-node.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-node
+          path: labsystem-node.tar
+          retention-days: 1
+
+  build-python:
+    name: Build imagem Python (Fornecedores)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: docker build -t labsystem-fornecedores:${{ github.sha }} -f Dockerfile.python .
+      - name: Salvar imagem para os próximos jobs
+        run: docker save labsystem-fornecedores:${{ github.sha }} -o labsystem-fornecedores.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-fornecedores
+          path: labsystem-fornecedores.tar
+          retention-days: 1
+
+  # ──────────────────────────────────────────────────────────────────────
+  # SCAN — segurança da informação: nenhuma imagem publicada ou implantada
+  # sem passar por scan de vulnerabilidades (Trivy). Mesmo princípio do
+  # job `security-scan` do ci.yml, agora aplicado à imagem final.
+  # ──────────────────────────────────────────────────────────────────────
+  scan-node:
+    name: Scan de vulnerabilidades — imagem Node
+    runs-on: ubuntu-latest
+    needs: build-node
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: image-node
+      - run: docker load -i labsystem-node.tar
+      - name: Trivy — scan da imagem
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: "labsystem-node:${{ github.sha }}"
+          severity: "CRITICAL,HIGH"
+          exit-code: "1" # falha o job (e bloqueia o deploy) se achar CRITICAL/HIGH
+          # Ignora CVEs sem correção publicada (comuns em pacotes do SO da imagem
+          # base): o scan só barra o que dá para resolver atualizando algo.
+          ignore-unfixed: true
+
+  scan-python:
+    name: Scan de vulnerabilidades — imagem Python
+    runs-on: ubuntu-latest
+    needs: build-python
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: image-fornecedores
+      - run: docker load -i labsystem-fornecedores.tar
+      - name: Trivy — scan da imagem
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: "labsystem-fornecedores:${{ github.sha }}"
+          severity: "CRITICAL,HIGH"
+          exit-code: "1"
+          ignore-unfixed: true
+
+  # ──────────────────────────────────────────────────────────────────────
+  # PUBLISH (opcional) — só roda se `push_image` for marcado ao disparar
+  # o workflow manualmente. Requer as imagens já aprovadas no scan.
+  # ──────────────────────────────────────────────────────────────────────
+  publish:
+    name: Publicar imagens no GHCR (opcional)
+    runs-on: ubuntu-latest
+    needs: [scan-node, scan-python]
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.push_image }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: image-node
+      - uses: actions/download-artifact@v4
+        with:
+          name: image-fornecedores
+      - run: |
+          docker load -i labsystem-node.tar
+          docker load -i labsystem-fornecedores.tar
+      - name: Login no GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Tag e push
+        run: |
+          docker tag labsystem-node:${{ github.sha }} ghcr.io/${{ github.repository }}/labsystem-node:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository }}/labsystem-node:${{ github.sha }}
+          docker tag labsystem-fornecedores:${{ github.sha }} ghcr.io/${{ github.repository }}/labsystem-fornecedores:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository }}/labsystem-fornecedores:${{ github.sha }}
+
+  # ──────────────────────────────────────────────────────────────────────
+  # DEPLOY — só roda se `deploy_production` for marcado E alguém com
+  # permissão aprovar no ambiente "production" (GitHub Environment com
+  # required reviewers). É o "portão de segurança humano" antes de
+  # produção: mesmo com build e scan verdes, uma pessoa precisa dizer
+  # explicitamente "pode ir".
+  #
+  # SIMULADO neste laboratório (não há servidor de produção real). Em um
+  # projeto real, os passos "echo" abaixo seriam substituídos por, por
+  # exemplo, uma action de SSH/kubectl/docker-compose contra o servidor
+  # de destino.
+  # ──────────────────────────────────────────────────────────────────────
+  deploy-production:
+    name: Deploy em produção (requer aprovação)
+    runs-on: ubuntu-latest
+    needs: [scan-node, scan-python]
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_production }}
+    environment:
+      name: production
+      # url: https://labsystem.exemplo.com   # descomente quando existir ambiente real
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy (placeholder — substituir por SSH/kubectl/etc. em ambiente real)
+        run: |
+          echo "Deploy aprovado por revisor humano do ambiente 'production'."
+          echo "Imagem: labsystem-node:${{ github.sha }}"
+          echo "Em um ambiente real, aqui rodaria, por exemplo:"
+          echo "  docker compose -f docker-compose.yml pull"
+          echo "  docker compose -f docker-compose.yml up -d"
+          echo "  (ou kubectl set image / uma action de deploy do provedor de nuvem)"
