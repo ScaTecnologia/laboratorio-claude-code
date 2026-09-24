@@ -97,7 +97,7 @@ async function run() {
   await eventoModule.registrar({ tipo: eventoModule.TIPOS.PAGAMENTO_APROVADO, clienteId: 2, clienteNome: 'Bruno',
     dados: { pedidoId: 'PED-TEST-1', valor: 2499.90, metodo: 'pix' } });
 
-  const { eventos: todos, total } = await eventoModule.todos({ limit: 10 });
+  const { total } = await eventoModule.todos({ limit: 10 });
   total === 4 ? ok(`todos(): ${total} eventos`) : fail(`Esperado 4, recebido: ${total}`);
 
   const alice = await eventoModule.porCliente(1);

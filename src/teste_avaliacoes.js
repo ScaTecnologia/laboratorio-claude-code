@@ -1,7 +1,7 @@
 // Teste completo de Avaliações — execute com: node src/teste_avaliacoes.js
 const { conectar }        = require('./mongo');
 const avaliacoesModule    = require('./avaliacoes');
-const { validar, construir, construirUpdate } = require('./models/avaliacao');
+const { validar, construir } = require('./models/avaliacao');
 
 function ok(msg)   { console.log('  ✅', msg); }
 function fail(msg) { console.error('  ❌', msg); process.exitCode = 1; }
@@ -56,7 +56,7 @@ async function run() {
   av1.pros.length === 2       ? ok(`Pros salvas: ${av1.pros}`)          : fail('Pros incorretas');
   av1.status === 'pendente'   ? ok('Status: pendente')                  : fail('Status errado');
 
-  const av2 = await avaliacoesModule.criar({
+  await avaliacoesModule.criar({
     produtoId: 1, clienteId: 2, nota: 3,
     titulo: 'Razoável', comentario: 'Esperava mais pela faixa de preço.',
     pros: ['Funcional'], contras: ['Acabamento médio'],
@@ -74,7 +74,7 @@ async function run() {
   // ── CRUD: listar ──────────────────────────────────────────────────────────
   titulo('4. Listar avaliações');
 
-  const { avaliacoes: todos, total } = await avaliacoesModule.listar({ limit: 10 });
+  const { total } = await avaliacoesModule.listar({ limit: 10 });
   total === 3 ? ok(`listar(): ${total} avaliações`) : fail(`Esperado 3, recebido: ${total}`);
 
   const { avaliacoes: porc1 } = await avaliacoesModule.listar({ clienteId: 1 });
@@ -93,10 +93,10 @@ async function run() {
   // ── Por produto ───────────────────────────────────────────────────────────
   titulo('6. Por produto');
 
-  const { avaliacoes: prod1, total: total1 } = await avaliacoesModule.porProduto(1);
+  const { total: total1 } = await avaliacoesModule.porProduto(1);
   total1 === 2 ? ok(`porProduto(1): ${total1} avaliações`) : fail(`Esperado 2, recebido: ${total1}`);
 
-  const { avaliacoes: prod2, total: total2 } = await avaliacoesModule.porProduto(2);
+  const { total: total2 } = await avaliacoesModule.porProduto(2);
   total2 === 1 ? ok(`porProduto(2): ${total2} avaliação`) : fail(`Esperado 1, recebido: ${total2}`);
 
   // ── Por cliente ───────────────────────────────────────────────────────────

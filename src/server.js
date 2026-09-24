@@ -8,7 +8,7 @@ const produtosModule = require('./produtos');
 const sessoes        = require('./sessoes');
 const mongoModule    = require('./mongo');
 
-const { getSessao, setCookie, parseCookies } = require('./middlewares/auth');
+const { getSessao } = require('./middlewares/auth');
 
 const routeAuth        = require('./routes/auth');
 const routeUsuarios    = require('./routes/usuarios');
