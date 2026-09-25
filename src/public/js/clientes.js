@@ -22,6 +22,8 @@ async function carregar() {
   const res = await fetch(API);
   if (!res.ok) return;                      // erro na requisição: mantém tela como está
   const clientes = await res.json();
+  const numbersClientes = document.getElementById('numberSpan');
+  numbersClientes.textContent = clientes.length;
   const tbody = document.getElementById('tabela-body');
 
   // Estado vazio: mostra uma linha de aviso ocupando todas as colunas.
